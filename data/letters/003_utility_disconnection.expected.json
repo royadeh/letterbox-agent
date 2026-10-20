@@ -2,9 +2,11 @@
   "facts": [
     {"kind": "sender", "value": "Riverbend Hydro Services", "evidence": "Riverbend Hydro Services"},
     {"kind": "reference", "value": "TEST-REF-003", "evidence": "Account reference: TEST-REF-003"},
-    {"kind": "purpose", "value": "Your electricity bill is overdue and your power may be cut off.", "evidence": "Our records show that your electricity account is overdue."},
-    {"kind": "amount", "value": "$342.17", "evidence": "The overdue amount is $342.17."},
-    {"kind": "deadline", "value": "November 15, 2026", "evidence": "To avoid disconnection, you must pay the overdue amount by November 15, 2026."},
-    {"kind": "required_action", "value": "Pay the overdue amount, or ask about a payment arrangement.", "evidence": "If you are having trouble paying, you can ask us about a payment arrangement."}
+    {"kind": "purpose", "value": "Your electricity account is overdue.", "evidence": "Our records show that your electricity account is overdue."},
+    {"kind": "amount", "label": "overdue amount", "value": "$342.17", "evidence": "The overdue amount is $342.17."},
+    {"kind": "deadline", "label": "pay the overdue amount to avoid disconnection", "value": "November 15, 2026", "evidence": "To avoid disconnection, you must pay the overdue amount by November 15, 2026."},
+    {"kind": "required_action", "value": "Pay the overdue amount.", "evidence": "To avoid disconnection, you must pay the overdue amount by November 15, 2026."},
+    {"kind": "required_action", "value": "If you are having trouble paying, ask about a payment arrangement.", "evidence": "If you are having trouble paying, you can ask us about a payment arrangement."},
+    {"kind": "required_action", "value": "Call the customer care line to discuss your options.", "evidence": "Please call our customer care line to discuss your options."}
   ]
 }

@@ -2,10 +2,11 @@
   "facts": [
     {"kind": "sender", "value": "Northfield Revenue Office", "evidence": "Northfield Revenue Office"},
     {"kind": "reference", "value": "TEST-REF-001", "evidence": "Reference: TEST-REF-001"},
-    {"kind": "purpose", "value": "The office changed your 2025 tax assessment and says you owe money.", "evidence": "Following our review, we have reassessed your return and disallowed the home office expenses you claimed."},
-    {"kind": "amount", "value": "$1,284.50", "evidence": "As a result, you owe a balance of $1,284.50."},
-    {"kind": "deadline", "value": "March 31, 2027", "evidence": "Please pay the full balance by March 31, 2027."},
-    {"kind": "deadline", "value": "within 90 days of the date of this notice", "evidence": "If you disagree with this reassessment, you may file a notice of objection within 90 days of the date of this notice."},
-    {"kind": "required_action", "value": "Pay the balance, or file an objection if you disagree.", "evidence": "Please pay the full balance by March 31, 2027."}
+    {"kind": "purpose", "value": "The office reassessed your tax return and disallowed the home office expenses you claimed.", "evidence": "Following our review, we have reassessed your return and disallowed the home office expenses you claimed."},
+    {"kind": "amount", "label": "balance owing", "value": "$1,284.50", "evidence": "As a result, you owe a balance of $1,284.50."},
+    {"kind": "deadline", "label": "pay the full balance", "value": "March 31, 2027", "evidence": "Please pay the full balance by March 31, 2027."},
+    {"kind": "deadline", "label": "file a notice of objection", "value": "within 90 days of the date of this notice", "evidence": "If you disagree with this reassessment, you may file a notice of objection within 90 days of the date of this notice."},
+    {"kind": "required_action", "value": "Pay the full balance.", "evidence": "Please pay the full balance by March 31, 2027."},
+    {"kind": "required_action", "value": "If you disagree with the reassessment, file a notice of objection.", "evidence": "If you disagree with this reassessment, you may file a notice of objection within 90 days of the date of this notice."}
   ]
 }

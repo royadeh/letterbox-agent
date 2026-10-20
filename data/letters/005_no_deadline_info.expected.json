@@ -2,7 +2,7 @@
   "facts": [
     {"kind": "sender", "value": "Greenfield Transit Authority", "evidence": "Greenfield Transit Authority"},
     {"kind": "reference", "value": "TEST-REF-005", "evidence": "Reference: TEST-REF-005"},
-    {"kind": "purpose", "value": "The transit authority is telling you that fare cards will be replaced with a new design.", "evidence": "Starting next year, older fare cards will be replaced with a new card design."},
-    {"kind": "required_action", "value": "Nothing to do right now.", "evidence": "You do not need to do anything at this time."}
+    {"kind": "purpose", "value": "Starting next year, older fare cards will be replaced with a new card design.", "evidence": "Starting next year, older fare cards will be replaced with a new card design."},
+    {"kind": "required_action", "value": "You do not need to do anything at this time.", "evidence": "You do not need to do anything at this time."}
   ]
 }
