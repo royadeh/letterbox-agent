@@ -1,0 +1,10 @@
+{
+  "facts": [
+    {"kind": "sender", "value": "Harbourview Credit Union", "evidence": "Harbourview Credit Union"},
+    {"kind": "reference", "value": "TEST-REF-006", "evidence": "Reference: TEST-REF-006"},
+    {"kind": "purpose", "value": "Your credit card statement is ready and a payment is due.", "evidence": "Your statement for this period is now available."},
+    {"kind": "amount", "value": "$2,460.00", "evidence": "Your total balance is $2,460.00."},
+    {"kind": "amount", "value": "$75.00", "evidence": "Your minimum payment is $75.00."},
+    {"kind": "deadline", "value": "December 5, 2026", "evidence": "The minimum payment is due on December 5, 2026."}
+  ]
+}
