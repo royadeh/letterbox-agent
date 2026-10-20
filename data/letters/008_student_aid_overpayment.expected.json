@@ -1,0 +1,13 @@
+{
+  "facts": [
+    {"kind": "sender", "value": "Highland Student Aid Office", "evidence": "Highland Student Aid Office"},
+    {"kind": "reference", "value": "TEST-REF-008", "evidence": "File reference: TEST-REF-008"},
+    {"kind": "purpose", "value": "You received more student aid than you were eligible for in the 2025-2026 school year.", "evidence": "Our records show that you received more student aid than you were eligible for in the 2025-2026 school year."},
+    {"kind": "amount", "label": "overpayment amount", "value": "$410.00", "evidence": "The overpayment amount is $410.00."},
+    {"kind": "deadline", "label": "contact us to tell us which option you choose", "value": "within 60 days of receiving this letter", "evidence": "Please contact us within 60 days of receiving this letter to tell us which option you choose."},
+    {"kind": "required_action", "value": "Repay the full amount at once.", "evidence": "You can repay the full amount at once, or you can ask for a repayment plan."},
+    {"kind": "required_action", "value": "Ask for a repayment plan.", "evidence": "You can repay the full amount at once, or you can ask for a repayment plan."},
+    {"kind": "required_action", "value": "Contact the office to tell them which option you choose.", "evidence": "Please contact us within 60 days of receiving this letter to tell us which option you choose."},
+    {"kind": "required_action", "value": "If you believe the overpayment is a mistake, ask the office to review the decision.", "evidence": "If you believe this overpayment is a mistake, you can ask us to review the decision."}
+  ]
+}

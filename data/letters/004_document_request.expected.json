@@ -1,0 +1,11 @@
+{
+  "facts": [
+    {"kind": "sender", "value": "Lakeshore Benefits Office", "evidence": "Lakeshore Benefits Office"},
+    {"kind": "reference", "value": "TEST-REF-004", "evidence": "File reference: TEST-REF-004"},
+    {"kind": "purpose", "value": "The office needs more information from you to continue its review.", "evidence": "To continue our review, we need more information from you."},
+    {"kind": "required_action", "value": "Send a copy of your current lease.", "evidence": "Please send us a copy of your current lease and proof of your income for the last three months."},
+    {"kind": "required_action", "value": "Send proof of your income for the last three months.", "evidence": "Please send us a copy of your current lease and proof of your income for the last three months."},
+    {"kind": "deadline", "label": "send these documents", "value": "within 30 days of the date of this letter", "evidence": "You must send these documents within 30 days of the date of this letter."},
+    {"kind": "required_action", "value": "Include the file reference on every page.", "evidence": "Please include the file reference on every page."}
+  ]
+}

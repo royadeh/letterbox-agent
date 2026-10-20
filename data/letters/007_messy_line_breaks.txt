@@ -1,0 +1,16 @@
+Pinecrest Municipal Parking
+Parking Violation Notice
+Notice reference: TEST-REF-007
+Date: October 15, 2026
+
+Dear Vehicle Owner,
+
+A parking violation was recorded for your vehicle in a
+no-parking zone.   The fine for this violation is
+$65.00. You must pay the fine or request a review
+within 15 days of the date of this notice.  If you do
+not pay or request a review, an additional
+late fee may be added.
+
+Parking Enforcement
+Pinecrest Municipal Parking

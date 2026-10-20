@@ -1,0 +1,11 @@
+{
+  "facts": [
+    {"kind": "sender", "value": "Pinecrest Municipal Parking", "evidence": "Pinecrest Municipal Parking"},
+    {"kind": "reference", "value": "TEST-REF-007", "evidence": "Notice reference: TEST-REF-007"},
+    {"kind": "purpose", "value": "A parking violation was recorded for your vehicle in a no-parking zone.", "evidence": "A parking violation was recorded for your vehicle in a no-parking zone."},
+    {"kind": "amount", "label": "fine", "value": "$65.00", "evidence": "The fine for this violation is $65.00."},
+    {"kind": "deadline", "label": "pay the fine or request a review", "value": "within 15 days of the date of this notice", "evidence": "You must pay the fine or request a review within 15 days of the date of this notice."},
+    {"kind": "required_action", "value": "Pay the fine.", "evidence": "You must pay the fine or request a review within 15 days of the date of this notice."},
+    {"kind": "required_action", "value": "Request a review.", "evidence": "You must pay the fine or request a review within 15 days of the date of this notice."}
+  ]
+}

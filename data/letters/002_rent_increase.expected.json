@@ -1,0 +1,10 @@
+{
+  "facts": [
+    {"kind": "sender", "value": "Maplecrest Property Management", "evidence": "Maplecrest Property Management"},
+    {"kind": "reference", "value": "TEST-REF-002", "evidence": "Reference: TEST-REF-002"},
+    {"kind": "purpose", "value": "This letter is a written notice that your rent is going up.", "evidence": "This letter is your written notice of a rent increase."},
+    {"kind": "amount", "label": "current monthly rent", "value": "$1,850.00", "evidence": "Your monthly rent will increase from $1,850.00 to $1,905.50."},
+    {"kind": "amount", "label": "new monthly rent", "value": "$1,905.50", "evidence": "Your monthly rent will increase from $1,850.00 to $1,905.50."},
+    {"kind": "deadline", "label": "new rent takes effect", "value": "February 1, 2027", "evidence": "The new rent takes effect on February 1, 2027."}
+  ]
+}
