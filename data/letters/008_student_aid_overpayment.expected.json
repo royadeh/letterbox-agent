@@ -8,6 +8,6 @@
     {"kind": "required_action", "value": "Repay the full amount at once.", "evidence": "You can repay the full amount at once, or you can ask for a repayment plan."},
     {"kind": "required_action", "value": "Ask for a repayment plan.", "evidence": "You can repay the full amount at once, or you can ask for a repayment plan."},
     {"kind": "required_action", "value": "Contact the office to tell them which option you choose.", "evidence": "Please contact us within 60 days of receiving this letter to tell us which option you choose."},
-    {"kind": "required_action", "value": "If you believe the overpayment is a mistake, ask the office to review the decision.", "evidence": "If you believe this overpayment is a mistake, you can ask us to review the decision."}
+    {"kind": "required_action", "condition": "you believe this overpayment is a mistake", "value": "Ask the office to review the decision.", "evidence": "If you believe this overpayment is a mistake, you can ask us to review the decision."}
   ]
 }
