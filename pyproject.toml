@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Explains dense official letters in plain language (English and Farsi)."
 requires-python = ">=3.10"
 dependencies = [
+    "anthropic>=2,<3",
     "pydantic>=2",
 ]
 
