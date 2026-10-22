@@ -15,7 +15,7 @@ Input: official letters in English. Output: plain-language explanation in Englis
 - Every extracted fact must carry the exact sentence from the letter that supports it, and a verify step must check that sentence appears in the letter.
 - Read API keys from environment variables only. Never hardcode keys or commit `.env`.
 - Use only synthetic letters. No real names, account numbers or ID numbers anywhere in the repo.
-- Never guess a deadline or amount. If unsure, say so and tell the reader to check with the sender.
+- Never guess a deadline, amount or date. If unsure, say so and tell the reader to check with the sender.
 - After each change, explain in under 10 lines, in plain language, what changed and why.
 - Commit after each working feature.
 
