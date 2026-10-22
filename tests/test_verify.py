@@ -74,3 +74,20 @@ def test_evidence_split_across_lines_still_verifies() -> None:
     letter = "The fine for this violation is\n$65.00.   Pay it soon."
     fine = fact(kind="amount", value="$65.00", evidence="The fine for this violation is $65.00.")
     assert verify(facts(fine), letter).facts[0].status is FactStatus.VERIFIED
+
+
+RENT_LETTER = (LETTERS_DIR / "002_rent_increase.txt").read_text(encoding="utf-8")
+
+
+def test_real_quote_with_the_wrong_date_is_marked_not_sure() -> None:
+    wrong = fact(kind="date", label="new rent takes effect", value="March 1, 2027", evidence="The new rent takes effect on February 1, 2027.")
+    result = verify(facts(wrong), RENT_LETTER)
+    assert result.facts[0].status is FactStatus.NOT_SURE
+    assert result.facts[0].display_value == CHECK_WITH_SENDER
+
+
+def test_made_up_quote_on_a_date_is_marked_not_sure() -> None:
+    made_up = fact(kind="date", value="January 1, 2027", evidence="The new rent takes effect on January 1, 2027.")
+    result = verify(facts(made_up), RENT_LETTER)
+    assert result.facts[0].status is FactStatus.NOT_SURE
+    assert result.dropped == []

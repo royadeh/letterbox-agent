@@ -8,7 +8,7 @@ from letterbox.schema import Fact, FactKind, LetterFacts
 from letterbox.text import appears_in
 
 CHECK_WITH_SENDER = "not sure, check with the sender"
-NEVER_GUESS_KINDS = frozenset({FactKind.DEADLINE, FactKind.AMOUNT})
+NEVER_GUESS_KINDS = frozenset({FactKind.DEADLINE, FactKind.AMOUNT, FactKind.DATE})
 
 
 class FactStatus(str, Enum):
