@@ -80,8 +80,12 @@ def new_run_id() -> str:
 
 
 def run(letter: str, client: LLMClient, run_id: str | None = None) -> Answer:
-    final = build_graph(client).invoke({"letter": letter, "run_id": run_id or new_run_id()})
-    return final["answer"]
+    return run_state(letter, client, run_id)["answer"]
+
+
+def run_state(letter: str, client: LLMClient, run_id: str | None = None) -> State:
+    """Run the graph and return its final state: every step's result and the answer."""
+    return build_graph(client).invoke({"letter": letter, "run_id": run_id or new_run_id()})
 
 
 def build_graph(client: LLMClient) -> CompiledStateGraph:

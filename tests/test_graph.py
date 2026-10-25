@@ -4,7 +4,7 @@ import logging
 import pytest
 
 from conftest import LETTERS_DIR, FakeLLM
-from letterbox.graph import READER_NOT_SURE, READER_NOT_SURE_FA, Answer, build_graph, run
+from letterbox.graph import READER_NOT_SURE, READER_NOT_SURE_FA, Answer, build_graph, run, run_state
 
 LETTER_PATH = LETTERS_DIR / "001_tax_reassessment.txt"
 LETTER = LETTER_PATH.read_text(encoding="utf-8")
@@ -155,3 +155,9 @@ def test_log_has_no_letter_or_model_text_only_step_error_reference_and_counts(
     for fragment in [*LETTER_LINES, "$1,284.50", "TEST-REF-001"]:
         assert fragment not in log, f"letter text in log: {fragment!r}"
     assert f"run {RUN_ID}: {step} not sure: {details}" in log
+
+
+def test_run_state_returns_the_steps_results_as_well_as_the_answer() -> None:
+    state = run_state(LETTER, FakeLLM([EXTRACT_OK, EXPLAIN_OK, OPTIONS_OK, REPLY_OK]), run_id=RUN_ID)
+    assert len(state["verified"].facts) == 8
+    assert isinstance(state["answer"], Answer)

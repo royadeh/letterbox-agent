@@ -5,3 +5,5 @@ __pycache__/
 *.db
 .DS_Store
 data/private/
+build/
+*.egg-info/
