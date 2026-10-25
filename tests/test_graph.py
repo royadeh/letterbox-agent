@@ -4,7 +4,16 @@ import logging
 import pytest
 
 from conftest import LETTERS_DIR, FakeLLM
-from letterbox.graph import READER_NOT_SURE, READER_NOT_SURE_FA, Answer, build_graph, run, run_state
+from letterbox.graph import (
+    READER_NOT_SURE,
+    READER_NOT_SURE_FA,
+    REPLY_NOTE,
+    REPLY_NOTE_FA,
+    Answer,
+    build_graph,
+    run,
+    run_state,
+)
 
 LETTER_PATH = LETTERS_DIR / "001_tax_reassessment.txt"
 LETTER = LETTER_PATH.read_text(encoding="utf-8")
@@ -161,3 +170,18 @@ def test_run_state_returns_the_steps_results_as_well_as_the_answer() -> None:
     state = run_state(LETTER, FakeLLM([EXTRACT_OK, EXPLAIN_OK, OPTIONS_OK, REPLY_OK]), run_id=RUN_ID)
     assert len(state["verified"].facts) == 8
     assert isinstance(state["answer"], Answer)
+
+
+def test_reply_section_says_sending_may_not_change_deadlines() -> None:
+    answer, _ = run_with([EXTRACT_OK, EXPLAIN_OK, OPTIONS_OK, REPLY_OK])
+    assert answer.reply_note_en == REPLY_NOTE == "Sending this reply may not change any deadline in the letter."
+    assert answer.reply_note_fa == REPLY_NOTE_FA
+    text = answer.text()
+    assert text.index("Reply draft") < text.index(REPLY_NOTE) < text.index(answer.reply_en)
+    assert text.index(REPLY_NOTE_FA) < text.index(answer.reply_fa)
+
+
+def test_no_reply_note_when_there_is_no_reply_draft() -> None:
+    answer, _ = run_with([EXTRACT_OK, EXPLAIN_OK, OPTIONS_OK, BAD, BAD])
+    assert answer.reply_note_en == answer.reply_note_fa == ""
+    assert REPLY_NOTE not in answer.text()

@@ -16,6 +16,8 @@ from letterbox.placeholders import (
     check_known,
     check_own_words,
     describe_all,
+    english_unconfirmed,
+    farsi_unconfirmed,
     farsi_value,
     fill,
     number_facts,
@@ -34,6 +36,12 @@ FAULT_OR_PROMISE = re.compile(
     r"|\b(i|we)\s+accept\s+(the\s+)?(responsibility|blame|debt|charge|claim)\b"
     r"|\b(i\s+am|i'm|we\s+are|we're)\s+(sorry|at\s+fault|responsible)\b"
     r"|\b(my|our)\s+(fault|mistake|error)\b",
+    re.IGNORECASE,
+)
+# The reply stays neutral: it does not accept, reject or dispute the claim.
+NOT_NEUTRAL = re.compile(
+    r"\b(i|we)\s+(do\s+not\s+|don['’]t\s+|cannot\s+|can['’]t\s+|can\s+not\s+)?"
+    r"(accept|agree|disagree|dispute|reject|contest|deny|object|challenge|refuse)\b",
     re.IGNORECASE,
 )
 
@@ -81,6 +89,9 @@ def _check(draft: Draft, facts: NumberedFacts) -> Draft:
     match = FAULT_OR_PROMISE.search(draft.reply)
     if match:
         raise ValueError(f"reply: do not admit fault or promise payment ({match.group(0)!r}).")
+    match = NOT_NEUTRAL.search(draft.reply)
+    if match:
+        raise ValueError(f"reply: stay neutral; do not accept, reject or dispute the claim ({match.group(0)!r}).")
     _check_reference(draft, facts)
     return draft
 
@@ -93,9 +104,14 @@ def _check_reference(draft: Draft, facts: NumberedFacts) -> None:
 
 def _render(draft: Draft, facts: NumberedFacts) -> Reply:
     return Reply(
-        english=fill(draft.reply, facts, _reply_value),
-        farsi_explanation=fill(draft.farsi_explanation, facts, farsi_value),
+        english=fill(draft.reply, facts, _reply_value, _reply_note),
+        farsi_explanation=fill(draft.farsi_explanation, facts, farsi_value, farsi_unconfirmed),
     )
+
+
+def _reply_note(kind: FactKind) -> str:
+    """In the reply, notes are in brackets: the reader must resolve them before sending."""
+    return f"[{english_unconfirmed(kind)}]"
 
 
 def _reply_value(checked: CheckedFact) -> str:

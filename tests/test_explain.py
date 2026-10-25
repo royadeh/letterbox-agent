@@ -114,6 +114,8 @@ BAD_ANSWERS = {
     "farsi placeholders differ": edited(1, farsi="حداقل پرداخت شما مشخص شده است."),
     "amount without its placeholder": edited(1, english="Your minimum payment is shown.", farsi="حداقل پرداخت شما مشخص شده است."),
     "not-sure deadline without its placeholder": edited(2, english="The payment is due soon.", farsi="مهلت پرداخت نزدیک است."),
+    "english stronger than the letter": edited(1, english="You must pay {F2}."),
+    "farsi stronger than the letter": edited(1, farsi="شما باید {F2} را بپردازید."),
 }
 
 
@@ -153,3 +155,11 @@ def test_not_sure_action_needs_its_placeholder_and_its_condition_is_not_sent() -
     assert len(llm.calls) == 2
     assert result.items[7].english == f"Fact {CHECK_WITH_SENDER}."
     assert MADE_UP_CONDITION not in llm.calls[0].user
+
+
+def test_not_sure_deadline_after_by_in_the_explanation_becomes_a_note() -> None:
+    by_deadline = edited(2, english="Pay the minimum payment by {F3}.", farsi="حداقل پرداخت را تا {F3} بپردازید.")
+    result = explain(VERIFIED, FakeLLM([by_deadline]))
+    assert isinstance(result, Explanation)
+    assert result.items[2].english == "Pay the minimum payment. The deadline is not confirmed: check with the sender."
+    assert result.items[2].farsi == "حداقل پرداخت را بپردازید. مهلت تأیید نشده است: با فرستنده بررسی کنید."

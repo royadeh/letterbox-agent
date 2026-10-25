@@ -13,9 +13,12 @@ from letterbox.placeholders import (
     CHECK_WITH_SENDER_FA,
     NumberedFacts,
     check_known,
+    check_not_stronger,
     check_own_words,
     describe_all,
+    english_unconfirmed,
     english_value,
+    farsi_unconfirmed,
     farsi_value,
     fill,
     is_not_sure,
@@ -93,6 +96,7 @@ def _check(draft: Draft, facts: NumberedFacts) -> Draft:
     _check_one_item_per_fact(draft, facts)
     for item in draft.items:
         _check_placeholders(item, facts)
+        check_not_stronger(item.fact, facts[item.fact], item.english, item.farsi)
         check_own_words(item.fact, item.english)
         check_own_words(item.fact, item.farsi)
     return draft
@@ -119,8 +123,8 @@ def _render(draft: Draft, facts: NumberedFacts) -> Explanation:
         items=[
             ExplainedFact(
                 fact_id=item.fact,
-                english=fill(item.english, facts, english_value),
-                farsi=fill(item.farsi, facts, farsi_value),
+                english=fill(item.english, facts, english_value, english_unconfirmed),
+                farsi=fill(item.farsi, facts, farsi_value, farsi_unconfirmed),
             )
             for item in draft.items
         ]

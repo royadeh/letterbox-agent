@@ -59,6 +59,9 @@ placeholder in both the English and the Farsi text.
 placeholder; it is replaced with a note telling the reader to check with the sender. \
 Never guess the value.
 - If an action has a "condition", say that the action applies only in that case.
+- Do not make the letter sound stronger than it is. Do not write "must", "need \
+to" or "have to", or "باید", "مجبور" or "لازم است" in Farsi, unless the fact has \
+"strong_wording": "yes". Write "The letter asks you to ..." instead.
 - English: short sentences and everyday words, for a reader who is not a native \
 English speaker.
 - Farsi: natural, everyday Persian with the same meaning as the English, and the \
@@ -84,6 +87,9 @@ is replaced with the exact value from the letter.
 - Some facts are marked "not sure": their value is unknown. If you need one, still \
 write its placeholder; it is replaced with a note telling the reader to check with \
 the sender. Never guess the value.
+- Do not make the letter sound stronger than it is. Do not write "must", "need \
+to" or "have to", or "باید", "مجبور" or "لازم است" in Farsi, unless the fact has \
+"strong_wording": "yes". Write "The letter asks you to ..." instead.
 - For a required_action marked "not sure", write a short option that contains its \
 placeholder, such as "Another step may apply: {F8}.", and no "farsi_condition".
 - If an action has a "condition", do not repeat the condition in "english"; the \
@@ -110,6 +116,9 @@ sender to confirm any fact marked "not sure". It may ask for more information \
 or time to understand the letter.
 - Do not admit fault. Do not apologise for or accept any mistake, debt or claim.
 - Do not promise payment, and do not commit the reader to any action.
+- Stay neutral. You may ask for an explanation and for documents, and ask the \
+sender to confirm the deadlines. Do not say that the reader accepts, rejects or \
+disputes the claim, or agrees or disagrees with it.
 - Do not add any fact that is not in the facts given.
 - Never write a number, date or month name yourself, in the reply or the Farsi \
 explanation, not even in digits or Persian digits. Where a value is needed, write \
