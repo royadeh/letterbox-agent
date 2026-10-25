@@ -92,6 +92,8 @@ BAD_ANSWERS = {
     "month name": edited(0, english="Pay the full balance by March: {F5}."),
     "farsi placeholders differ": edited(0, farsi="کل مبلغ را بپردازید."),
     "unknown placeholder": edited(0, english="Pay {F9} by {F5}.", farsi="{F9} را تا {F5} بپردازید."),
+    "english stronger than the letter": edited(0, english="You need to pay the full balance by {F5}."),
+    "farsi stronger than the letter": edited(0, farsi="شما مجبور هستید کل مبلغ را تا {F5} بپردازید."),
 }
 
 
@@ -153,3 +155,13 @@ def test_invalid_answer_for_a_not_sure_action_is_retried_once(bad: str) -> None:
     llm = FakeLLM([bad, answer(NOT_SURE_OPTIONS)])
     assert isinstance(list_options(NOT_SURE_ACTION, llm), Options)
     assert len(llm.calls) == 2
+
+
+def test_by_is_dropped_before_a_deadline_that_starts_with_within() -> None:
+    by_within = edited(1, english="File a notice of objection by {F6}.", farsi="اعتراض‌نامه را تا {F6} ثبت کنید.")
+    result = list_options(VERIFIED, FakeLLM([by_within]))
+    assert isinstance(result, Options)
+    assert result.english.splitlines()[1] == (
+        "If you disagree with this reassessment: File a notice of objection within 90 days of the date of this notice."
+    )
+    assert f"اعتراض‌نامه را {isolate('within 90 days of the date of this notice')} ثبت کنید." in result.farsi

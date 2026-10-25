@@ -8,6 +8,7 @@ check with the sender" and that reference.
 
 import logging
 import uuid
+from dataclasses import dataclass
 from typing import Literal, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -32,12 +33,22 @@ NO_OPTIONS = "No actions were found in the letter."
 NO_OPTIONS_FA = "در این نامه اقدامی پیدا نشد."
 DISCLAIMER = "General information only, not legal or tax advice."
 DISCLAIMER_FA = "این فقط اطلاعات عمومی است، نه مشاوره حقوقی یا مالیاتی."
+REPLY_NOTE = "Sending this reply may not change any deadline in the letter."
+REPLY_NOTE_FA = "ارسال این پاسخ ممکن است هیچ‌یک از مهلت‌های نامه را تغییر ندهد."
 
 Route = Literal["continue", "not_sure"]
 
 
+@dataclass(frozen=True)
+class Section:
+    title: str
+    body: str
+    farsi: bool
+    note: str = ""
+
+
 class Answer(BaseModel):
-    """What the reader sees. Empty sections are left out of the text."""
+    """What the reader sees. Empty sections are left out."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -47,19 +58,24 @@ class Answer(BaseModel):
     options_fa: str = ""
     reply_en: str = ""
     reply_fa: str = ""
+    reply_note_en: str = ""
+    reply_note_fa: str = ""
     disclaimer_en: str = DISCLAIMER
     disclaimer_fa: str = DISCLAIMER_FA
 
-    def text(self) -> str:
+    def sections(self) -> list[Section]:
         sections = [
-            ("Explanation", self.explanation_en),
-            ("توضیح", self.explanation_fa),
-            ("Your options", self.options_en),
-            ("گزینه‌های شما", self.options_fa),
-            ("Reply draft (check it before you send it)", self.reply_en),
-            ("توضیح پیش‌نویس پاسخ", self.reply_fa),
+            Section("Explanation", self.explanation_en, farsi=False),
+            Section("توضیح", self.explanation_fa, farsi=True),
+            Section("Your options", self.options_en, farsi=False),
+            Section("گزینه‌های شما", self.options_fa, farsi=True),
+            Section("Reply draft (check it before you send it)", self.reply_en, farsi=False, note=self.reply_note_en),
+            Section("توضیح پیش‌نویس پاسخ", self.reply_fa, farsi=True, note=self.reply_note_fa),
         ]
-        parts = [f"{title}\n{body}" for title, body in sections if body]
+        return [section for section in sections if section.body]
+
+    def text(self) -> str:
+        parts = ["\n".join(filter(None, [s.title, s.note, s.body])) for s in self.sections()]
         return "\n\n".join([*parts, self.disclaimer_en, self.disclaimer_fa]) + "\n"
 
 
@@ -185,7 +201,8 @@ def _not_sure(state: State) -> State:
 
 def _finish(state: State) -> State:
     options_en, options_fa = _options_text(state.get("option_list"), state["run_id"])
-    reply_en, reply_fa = _reply_text(state.get("reply_draft"), state["run_id"])
+    reply = state.get("reply_draft")
+    reply_en, reply_fa = _reply_text(reply, state["run_id"])
     explanation = state["explanation"]
     answer = Answer(
         explanation_en=explanation.english,
@@ -194,6 +211,8 @@ def _finish(state: State) -> State:
         options_fa=options_fa,
         reply_en=reply_en,
         reply_fa=reply_fa,
+        reply_note_en=REPLY_NOTE if reply is not None else "",
+        reply_note_fa=REPLY_NOTE_FA if reply is not None else "",
     )
     return {"answer": answer}
 

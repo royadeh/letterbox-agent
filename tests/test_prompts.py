@@ -50,3 +50,16 @@ def test_reply_prompt_forbids_admitting_fault_promising_payment_and_new_facts() 
     assert "do not admit fault" in text
     assert "do not promise payment" in text
     assert "do not add any fact" in text
+
+
+@pytest.mark.parametrize("prompt", ["explain", "options"])
+def test_explain_and_options_prompts_say_not_to_strengthen_the_letter(prompt: str) -> None:
+    text = {"explain": EXPLAIN_SYSTEM_PROMPT, "options": OPTIONS_SYSTEM_PROMPT}[prompt].lower()
+    assert "do not make the letter sound stronger than it is" in text
+    assert "the letter asks you to" in text
+
+
+def test_reply_prompt_asks_for_a_neutral_reply() -> None:
+    text = REPLY_SYSTEM_PROMPT.lower()
+    assert "do not say that the reader accepts, rejects or disputes" in text
+    assert "explanation" in text and "documents" in text

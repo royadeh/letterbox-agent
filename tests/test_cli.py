@@ -1,3 +1,4 @@
+import html
 import logging
 from collections.abc import Iterator
 from pathlib import Path
@@ -79,3 +80,23 @@ def test_cli_keeps_sdk_loggers_at_warning_even_with_anthropic_log_debug(monkeypa
     for name in SDK_LOGGERS:
         assert not logging.getLogger(name).isEnabledFor(logging.INFO), name
         assert logging.getLogger(name).isEnabledFor(logging.WARNING), name
+
+
+def test_cli_html_option_writes_the_answer_as_html(tmp_path: Path) -> None:
+    output = tmp_path / "out.html"
+    exit_code = main([str(LETTER_PATH), "--html", str(output)], client_factory=lambda: FakeLLM(["not json", "not json"]))
+    assert exit_code == 0
+    page = output.read_text(encoding="utf-8")
+    assert html.escape(READER_NOT_SURE) in page
+    assert 'dir="rtl"' in page
+    assert "General information only, not legal or tax advice." in page
+
+
+def test_cli_html_option_that_cannot_be_written_prints_a_short_error(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    output = tmp_path / "missing-folder" / "out.html"
+    exit_code = main([str(LETTER_PATH), "--html", str(output)], client_factory=lambda: FakeLLM(["not json", "not json"]))
+    assert exit_code == 1
+    assert "Could not write the HTML file." in capsys.readouterr().err
+    assert not output.exists()

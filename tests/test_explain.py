@@ -114,6 +114,8 @@ BAD_ANSWERS = {
     "farsi placeholders differ": edited(1, farsi="حداقل پرداخت شما مشخص شده است."),
     "amount without its placeholder": edited(1, english="Your minimum payment is shown.", farsi="حداقل پرداخت شما مشخص شده است."),
     "not-sure deadline without its placeholder": edited(2, english="The payment is due soon.", farsi="مهلت پرداخت نزدیک است."),
+    "english stronger than the letter": edited(1, english="You must pay {F2}."),
+    "farsi stronger than the letter": edited(1, farsi="شما باید {F2} را بپردازید."),
 }
 
 

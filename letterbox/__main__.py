@@ -8,7 +8,8 @@ from typing import Callable, Sequence
 
 import anthropic
 
-from letterbox.graph import new_run_id, run
+from letterbox.graph import Answer, new_run_id, run
+from letterbox.html_output import render_html
 from letterbox.llm import ClaudeClient, LLMClient, LLMError
 from letterbox.logging_setup import configure_logging
 
@@ -27,7 +28,7 @@ def main(argv: Sequence[str] | None = None, client_factory: Callable[[], LLMClie
     except LLMError as error:
         print(error, file=sys.stderr)
         return 1
-    return _run_and_print(letter, client)
+    return _run_and_print(letter, client, Path(args.html) if args.html else None)
 
 
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
@@ -35,6 +36,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         prog="letterbox", description="Explain an official letter in plain English and Farsi."
     )
     parser.add_argument("letter_file", help="path to a text file with the letter")
+    parser.add_argument("--html", metavar="OUT.html", help="also write the answer to this HTML file")
     return parser.parse_args(argv)
 
 
@@ -45,7 +47,7 @@ def _read_letter(path: Path) -> str | None:
         return None
 
 
-def _run_and_print(letter: str, client: LLMClient) -> int:
+def _run_and_print(letter: str, client: LLMClient, html_path: Path | None) -> int:
     run_id = new_run_id()
     try:
         answer = run(letter, client, run_id=run_id)
@@ -54,6 +56,15 @@ def _run_and_print(letter: str, client: LLMClient) -> int:
         print(f"Something went wrong. (Reference: {run_id})", file=sys.stderr)
         return 1
     print(answer.text())
+    return _write_html(answer, html_path) if html_path else 0
+
+
+def _write_html(answer: Answer, path: Path) -> int:
+    try:
+        path.write_text(render_html(answer), encoding="utf-8")
+    except OSError:
+        print("Could not write the HTML file.", file=sys.stderr)
+        return 1
     return 0
 
 

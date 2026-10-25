@@ -25,6 +25,15 @@ FARSI_MONTHS = frozenset(
         "فروردین", "اردیبهشت", "خرداد", "مرداد", "شهریور", "آبان", "بهمن", "اسفند",
     }
 )
+# A placeholder, and an English or Farsi "by" before it. "by" is dropped before a
+# value that already starts with "within", so the reader never sees "by within".
+FILL = re.compile(
+    r"(?P<before>(?<!\w)(?:by|before|until|no later than|تا|قبل از)\s+)?\{(?P<id>F\d+)\}", re.IGNORECASE
+)
+# Wording that makes the letter sound stronger, allowed only if the letter's own
+# sentence for that fact uses such wording.
+STRONG_ENGLISH = re.compile(r"\b(must|needs?\s+to|ha(?:ve|s)\s+to|required\s+to|obliged\s+to|obligated\s+to)\b", re.IGNORECASE)
+STRONG_FARSI = ("باید", "مجبور", "لازم است", "ملزم", "موظف")
 # Keeps a left-to-right value such as "$75.00" in the right order inside Farsi text.
 FIRST_STRONG_ISOLATE = "⁨"
 POP_DIRECTIONAL_ISOLATE = "⁩"
@@ -53,7 +62,24 @@ def _describe(fact_id: str, checked: CheckedFact) -> dict[str, str]:
     entry["value"] = fact.value
     if fact.condition:
         entry["condition"] = fact.condition
+    if letter_is_strong(checked):
+        entry["strong_wording"] = "yes"
     return entry
+
+
+def letter_is_strong(checked: CheckedFact) -> bool:
+    """True if the letter's own (verified) sentence says "must", "need to" or similar."""
+    return checked.status is FactStatus.VERIFIED and STRONG_ENGLISH.search(checked.fact.evidence) is not None
+
+
+def check_not_stronger(where: str, checked: CheckedFact, english: str, farsi: str) -> None:
+    if letter_is_strong(checked):
+        return
+    if STRONG_ENGLISH.search(english) or any(word in farsi for word in STRONG_FARSI):
+        raise ValueError(
+            f"{where}: this sounds stronger than the letter; do not write 'must', 'need to' or 'have to', "
+            "write 'the letter asks you to'."
+        )
 
 
 def is_not_sure(checked: CheckedFact) -> bool:
@@ -80,7 +106,18 @@ def check_own_words(where: str, text: str) -> None:
 
 
 def fill(text: str, facts: NumberedFacts, value_of: ValueOf) -> str:
-    return PLACEHOLDER.sub(lambda match: value_of(facts[match.group(1)]), text)
+    def replace(match: re.Match[str]) -> str:
+        checked = facts[match.group("id")]
+        before = match.group("before") or ""
+        if before and _starts_with_within(checked):
+            before = ""
+        return f"{before}{value_of(checked)}"
+
+    return FILL.sub(replace, text)
+
+
+def _starts_with_within(checked: CheckedFact) -> bool:
+    return checked.status is FactStatus.VERIFIED and checked.fact.value.strip().lower().startswith("within")
 
 
 def english_value(checked: CheckedFact) -> str:

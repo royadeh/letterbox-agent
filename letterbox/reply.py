@@ -36,6 +36,12 @@ FAULT_OR_PROMISE = re.compile(
     r"|\b(my|our)\s+(fault|mistake|error)\b",
     re.IGNORECASE,
 )
+# The reply stays neutral: it does not accept, reject or dispute the claim.
+NOT_NEUTRAL = re.compile(
+    r"\b(i|we)\s+(do\s+not\s+|don['’]t\s+|cannot\s+|can['’]t\s+|can\s+not\s+)?"
+    r"(accept|agree|disagree|dispute|reject|contest|deny|object|challenge|refuse)\b",
+    re.IGNORECASE,
+)
 
 
 class Draft(BaseModel):
@@ -81,6 +87,9 @@ def _check(draft: Draft, facts: NumberedFacts) -> Draft:
     match = FAULT_OR_PROMISE.search(draft.reply)
     if match:
         raise ValueError(f"reply: do not admit fault or promise payment ({match.group(0)!r}).")
+    match = NOT_NEUTRAL.search(draft.reply)
+    if match:
+        raise ValueError(f"reply: stay neutral; do not accept, reject or dispute the claim ({match.group(0)!r}).")
     _check_reference(draft, facts)
     return draft
 

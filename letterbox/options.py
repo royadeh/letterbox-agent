@@ -12,6 +12,7 @@ from letterbox.llm import LLMClient
 from letterbox.placeholders import (
     NumberedFacts,
     check_known,
+    check_not_stronger,
     check_own_words,
     describe_all,
     english_value,
@@ -119,6 +120,8 @@ def _check_option_text(option: DraftOption, facts: NumberedFacts) -> None:
         raise ValueError(f"{option.fact}: English and Farsi must use the same placeholders.")
     if is_not_sure(facts[option.fact]) and option.fact not in english:
         raise ValueError(f"{option.fact}: this action is not sure; write only its placeholder {{{option.fact}}}.")
+    farsi = f"{option.farsi} {option.farsi_condition or ''}"
+    check_not_stronger(option.fact, facts[option.fact], option.english, farsi)
     for text in (option.english, option.farsi, option.farsi_condition or ""):
         check_known(option.fact, text, facts)
         check_own_words(option.fact, text)

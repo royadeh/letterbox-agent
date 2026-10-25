@@ -80,6 +80,13 @@ BAD_ANSWERS = {
     "persian digits in farsi": answer(farsi=GOOD_FARSI + " ۹۰ روز"),
     "unknown placeholder": answer(reply=GOOD_REPLY.replace("{F1}", "{F9}")),
     "missing reference placeholder": answer(reply=GOOD_REPLY.replace("Re: {F2}\n\n", "")),
+    "does not accept": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I do not accept the reassessment.")),
+    "don't accept, curly apostrophe": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I don\u2019t accept this.")),
+    "disputes": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I dispute this claim.")),
+    "disagrees": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I disagree with the reassessment.")),
+    "rejects": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "We reject the balance.")),
+    "accepts": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I accept the reassessment.")),
+    "agrees": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I agree with your decision.")),
 }
 
 
@@ -110,3 +117,13 @@ def test_no_verified_facts_returns_not_sure_without_calling_the_model() -> None:
     llm = FakeLLM([])
     assert isinstance(draft_reply(VerifiedFacts(facts=[], dropped=[]), llm), NotSure)
     assert llm.calls == []
+
+
+def test_neutral_reply_asking_for_explanation_documents_and_deadlines_is_accepted() -> None:
+    neutral = (
+        "Dear {F1},\n\nRe: {F2}\n\n"
+        "Thank you for your letter. Please send me an explanation of the reassessment and copies of the "
+        "documents you used. Please also confirm the deadlines in your letter: {F5} and {F6}.\n\n"
+        "Sincerely,\n[Your name]"
+    )
+    assert isinstance(draft_reply(VERIFIED, FakeLLM([answer(reply=neutral)])), Reply)
