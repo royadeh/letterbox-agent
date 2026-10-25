@@ -5,6 +5,7 @@ description = "Explains dense official letters in plain language (English and Fa
 requires-python = ">=3.10"
 dependencies = [
     "anthropic>=2,<3",
+    "langgraph>=1.2,<2",
     "pydantic>=2",
 ]
 
