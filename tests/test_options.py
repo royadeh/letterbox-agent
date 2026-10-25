@@ -52,10 +52,11 @@ def test_good_answer_lists_each_action_and_shows_its_condition() -> None:
     result = list_options(VERIFIED, llm)
     assert isinstance(result, Options)
     assert result.english == (
-        f"Pay the full balance by {CHECK_WITH_SENDER}.\n"
+        "Pay the full balance. The deadline is not confirmed: check with the sender.\n"
         "If you disagree with this reassessment: "
         "File a notice of objection within 90 days of the date of this notice."
     )
+    assert result.farsi.splitlines()[0] == "کل مبلغ را بپردازید. مهلت تأیید نشده است: با فرستنده بررسی کنید."
     assert result.farsi.splitlines()[1] == (
         f"اگر {FARSI_CONDITION}: اعتراض‌نامه را {isolate('within 90 days of the date of this notice')} ثبت کنید."
     )

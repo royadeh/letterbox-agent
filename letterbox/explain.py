@@ -16,7 +16,9 @@ from letterbox.placeholders import (
     check_not_stronger,
     check_own_words,
     describe_all,
+    english_unconfirmed,
     english_value,
+    farsi_unconfirmed,
     farsi_value,
     fill,
     is_not_sure,
@@ -121,8 +123,8 @@ def _render(draft: Draft, facts: NumberedFacts) -> Explanation:
         items=[
             ExplainedFact(
                 fact_id=item.fact,
-                english=fill(item.english, facts, english_value),
-                farsi=fill(item.farsi, facts, farsi_value),
+                english=fill(item.english, facts, english_value, english_unconfirmed),
+                farsi=fill(item.farsi, facts, farsi_value, farsi_unconfirmed),
             )
             for item in draft.items
         ]

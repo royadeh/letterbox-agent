@@ -155,3 +155,11 @@ def test_not_sure_action_needs_its_placeholder_and_its_condition_is_not_sent() -
     assert len(llm.calls) == 2
     assert result.items[7].english == f"Fact {CHECK_WITH_SENDER}."
     assert MADE_UP_CONDITION not in llm.calls[0].user
+
+
+def test_not_sure_deadline_after_by_in_the_explanation_becomes_a_note() -> None:
+    by_deadline = edited(2, english="Pay the minimum payment by {F3}.", farsi="حداقل پرداخت را تا {F3} بپردازید.")
+    result = explain(VERIFIED, FakeLLM([by_deadline]))
+    assert isinstance(result, Explanation)
+    assert result.items[2].english == "Pay the minimum payment. The deadline is not confirmed: check with the sender."
+    assert result.items[2].farsi == "حداقل پرداخت را بپردازید. مهلت تأیید نشده است: با فرستنده بررسی کنید."

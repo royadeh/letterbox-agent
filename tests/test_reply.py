@@ -127,3 +127,14 @@ def test_neutral_reply_asking_for_explanation_documents_and_deadlines_is_accepte
         "Sincerely,\n[Your name]"
     )
     assert isinstance(draft_reply(VERIFIED, FakeLLM([answer(reply=neutral)])), Reply)
+
+
+def test_not_sure_deadline_after_by_in_the_reply_becomes_a_bracketed_note() -> None:
+    reply = "Dear {F1},\n\nRe: {F2}\n\nI understand the balance is due by {F5}. Please confirm it.\n\n[Your name]"
+    result = draft_reply(VERIFIED, FakeLLM([answer(reply=reply)]))
+    assert isinstance(result, Reply)
+    assert (
+        "I understand the balance is due. [The deadline is not confirmed: check with the sender.] Please confirm it."
+        in result.english
+    )
+    assert WRONG_TAX_DEADLINE not in result.english

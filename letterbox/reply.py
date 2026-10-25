@@ -16,6 +16,8 @@ from letterbox.placeholders import (
     check_known,
     check_own_words,
     describe_all,
+    english_unconfirmed,
+    farsi_unconfirmed,
     farsi_value,
     fill,
     number_facts,
@@ -102,9 +104,14 @@ def _check_reference(draft: Draft, facts: NumberedFacts) -> None:
 
 def _render(draft: Draft, facts: NumberedFacts) -> Reply:
     return Reply(
-        english=fill(draft.reply, facts, _reply_value),
-        farsi_explanation=fill(draft.farsi_explanation, facts, farsi_value),
+        english=fill(draft.reply, facts, _reply_value, _reply_note),
+        farsi_explanation=fill(draft.farsi_explanation, facts, farsi_value, farsi_unconfirmed),
     )
+
+
+def _reply_note(kind: FactKind) -> str:
+    """In the reply, notes are in brackets: the reader must resolve them before sending."""
+    return f"[{english_unconfirmed(kind)}]"
 
 
 def _reply_value(checked: CheckedFact) -> str:

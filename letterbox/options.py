@@ -15,7 +15,9 @@ from letterbox.placeholders import (
     check_not_stronger,
     check_own_words,
     describe_all,
+    english_unconfirmed,
     english_value,
+    farsi_unconfirmed,
     farsi_value,
     fill,
     is_not_sure,
@@ -132,10 +134,10 @@ def _render(draft: Draft, facts: NumberedFacts) -> Options:
 
 
 def _render_option(option: DraftOption, facts: NumberedFacts) -> Option:
-    english = fill(option.english, facts, english_value)
-    farsi = fill(option.farsi, facts, farsi_value)
+    english = fill(option.english, facts, english_value, english_unconfirmed)
+    farsi = fill(option.farsi, facts, farsi_value, farsi_unconfirmed)
     condition = _shown_condition(facts[option.fact])
     if condition is not None and option.farsi_condition is not None:
         english = f"If {condition}: {english}"
-        farsi = f"اگر {fill(option.farsi_condition, facts, farsi_value)}: {farsi}"
+        farsi = f"اگر {fill(option.farsi_condition, facts, farsi_value, farsi_unconfirmed)}: {farsi}"
     return Option(fact_id=option.fact, english=english, farsi=farsi)
