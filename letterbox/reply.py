@@ -66,7 +66,7 @@ class Reply(BaseModel):
 def draft_reply(verified: VerifiedFacts, client: LLMClient) -> Reply | NotSure:
     facts = number_facts(verified)
     if not facts:
-        return NotSure(reason="No verified facts to reply to.")
+        return NotSure(error_type="NoVerifiedFacts")
 
     def parse(text: str) -> Reply:
         return _render(_check(Draft.model_validate_json(text), facts), facts)
