@@ -159,16 +159,16 @@ def sample_results() -> list[LetterResult]:
     half = {FactKind.DEADLINE: 0, FactKind.AMOUNT: 1, FactKind.DATE: 0}
     return [
         LetterResult("006_two_amounts_statement", "ok", Comparison(full, full, not_sure=0, dropped=0), model_calls=3),
-        LetterResult("009_example", "not sure at options", Comparison(half, full, not_sure=1, dropped=2), model_calls=5),
+        LetterResult("009_example", "not sure at options", Comparison(half, full, not_sure=1, dropped=2, extra=1), model_calls=5),
     ]
 
 
 def test_results_table_has_a_row_per_letter_and_a_total() -> None:
     table = format_results(sample_results(), model="claude-sonnet-5-5", day="2026-10-25")
-    assert "| Letter | Outcome | Deadlines | Amounts | Dates | Not sure | Dropped | Model calls |" in table
-    assert "| 006_two_amounts_statement | ok | 1/1 | 2/2 | 0/0 | 0 | 0 | 3 |" in table
-    assert "| 009_example | not sure at options | 0/1 | 1/2 | 0/0 | 1 | 2 | 5 |" in table
-    assert "| **Total** | 1/2 ok | 1/2 | 3/4 | 0/0 | 1 | 2 | 8 |" in table
+    assert "| Letter | Outcome | Deadlines | Amounts | Dates | Extra | Not sure | Dropped | Model calls |" in table
+    assert "| 006_two_amounts_statement | ok | 1/1 | 2/2 | 0/0 | 0 | 0 | 0 | 3 |" in table
+    assert "| 009_example | not sure at options | 0/1 | 1/2 | 0/0 | 1 | 1 | 2 | 5 |" in table
+    assert "| **Total** | 1/2 ok | 1/2 | 3/4 | 0/0 | 1 | 1 | 2 | 8 |" in table
     assert "claude-sonnet-5-5" in table and "2026-10-25" in table
 
 
@@ -189,4 +189,63 @@ def test_main_writes_the_results_table(tmp_path: Path) -> None:
     output = tmp_path / "RESULTS.md"
     llm = FakeLLM(statement_responses())
     assert main(output=output, letters_dir=letters, client_factory=lambda: llm) == 0
-    assert "| 006_two_amounts_statement | ok | 1/1 | 2/2 | 0/0 | 0 | 0 | 3 |" in output.read_text(encoding="utf-8")
+    assert "| 006_two_amounts_statement | ok | 1/1 | 2/2 | 0/0 | 0 | 0 | 0 | 3 |" in output.read_text(encoding="utf-8")
+
+
+def test_answer_key_compared_with_itself_has_no_extras() -> None:
+    key = key_for(STATEMENT)
+    assert compare(key, verify(key, STATEMENT.read_text(encoding="utf-8"))).extra == 0
+
+
+def test_verified_value_not_in_the_answer_key_counts_as_extra() -> None:
+    as_date = fact(kind="date", value="December 5, 2026", evidence="The minimum payment is due on December 5, 2026.")
+    letter = STATEMENT.read_text(encoding="utf-8")
+    assert compare(key_for(STATEMENT), verify(with_facts(MINIMUM, as_date), letter)).extra == 1
+
+
+def test_a_second_copy_of_a_correct_value_counts_as_extra() -> None:
+    letter = STATEMENT.read_text(encoding="utf-8")
+    result = compare(key_for(STATEMENT), verify(with_facts(MINIMUM, MINIMUM), letter))
+    assert result.correct[FactKind.AMOUNT] == 1
+    assert result.extra == 1
+
+
+def test_not_sure_and_other_kinds_are_not_extras() -> None:
+    wrong = fact(kind="amount", value="$57.00", evidence="Your minimum payment is $75.00.")
+    sender = fact(kind="sender", value="Harbourview Credit Union", evidence="Harbourview Credit Union")
+    letter = STATEMENT.read_text(encoding="utf-8")
+    assert compare(key_for(STATEMENT), verify(with_facts(wrong, sender), letter)).extra == 0
+
+
+def copy_letters(folder: Path, names: list[str]) -> None:
+    folder.mkdir(exist_ok=True)
+    for name in names:
+        for suffix in (".txt", ".expected.json"):
+            source = (LETTERS_DIR / name).with_suffix(suffix)
+            (folder / source.name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def test_run_eval_with_a_limit_runs_only_the_first_letters(tmp_path: Path) -> None:
+    copy_letters(tmp_path, ["006_two_amounts_statement", "007_messy_line_breaks"])
+    results = run_eval(tmp_path, FakeLLM(statement_responses()), limit=1)
+    assert [result.letter for result in results] == ["006_two_amounts_statement"]
+
+
+def test_main_limit_option_runs_only_the_first_letters(tmp_path: Path) -> None:
+    letters = tmp_path / "letters"
+    copy_letters(letters, ["006_two_amounts_statement", "007_messy_line_breaks"])
+    output = tmp_path / "RESULTS.md"
+    llm = FakeLLM(statement_responses())
+    assert main(["--limit", "1"], output=output, letters_dir=letters, client_factory=lambda: llm) == 0
+    table = output.read_text(encoding="utf-8")
+    assert "006_two_amounts_statement" in table
+    assert "007_messy_line_breaks" not in table
+    assert len(llm.calls) == 3
+
+
+@pytest.mark.parametrize("limit", ["0", "-1", "two"])
+def test_main_rejects_a_limit_that_is_not_a_positive_number(limit: str, tmp_path: Path) -> None:
+    with pytest.raises(SystemExit) as stopped:
+        main(["--limit", limit], output=tmp_path / "RESULTS.md")
+    assert stopped.value.code == 2
+    assert not (tmp_path / "RESULTS.md").exists()

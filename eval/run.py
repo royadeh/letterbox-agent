@@ -4,13 +4,14 @@ Run with `python -m eval.run`. It calls the real model, so it needs
 ANTHROPIC_API_KEY and costs money; it is not run in CI.
 """
 
+import argparse
 import logging
 import sys
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 import anthropic
 
@@ -37,6 +38,7 @@ class Comparison:
     expected: KindCounts
     not_sure: int
     dropped: int
+    extra: int = 0  # verified deadlines, amounts and dates that are not in the answer key
 
 
 @dataclass(frozen=True)
@@ -60,18 +62,19 @@ class CountingClient:
 
 
 def compare(key: LetterFacts, verified: VerifiedFacts | None) -> Comparison:
-    """Count key values found as verified facts of the same kind, plus not-sure and dropped facts."""
+    """Count key values found as verified facts of the same kind, extras, and not-sure and dropped facts."""
     found = [] if verified is None else [c.fact for c in verified.facts if c.status is FactStatus.VERIFIED]
-    correct, expected = {}, {}
+    correct, expected, extra = {}, {}, 0
     for kind in SCORED_KINDS:
         wanted = Counter(_comparable(fact.value) for fact in key.facts if fact.kind is kind)
         got = Counter(_comparable(fact.value) for fact in found if fact.kind is kind)
         expected[kind] = sum(wanted.values())
         correct[kind] = sum((wanted & got).values())
+        extra += sum((got - wanted).values())
     if verified is None:
         return Comparison(correct, expected, not_sure=0, dropped=0)
     not_sure = sum(1 for checked in verified.facts if checked.status is FactStatus.NOT_SURE)
-    return Comparison(correct, expected, not_sure=not_sure, dropped=len(verified.dropped))
+    return Comparison(correct, expected, not_sure=not_sure, dropped=len(verified.dropped), extra=extra)
 
 
 def _comparable(value: str) -> str:
@@ -99,23 +102,25 @@ def evaluate_letter(letter_path: Path, client: LLMClient) -> LetterResult:
     return LetterResult(letter_path.stem, outcome(state), comparison, counting.calls)
 
 
-def run_eval(letters_dir: Path, client: LLMClient) -> list[LetterResult]:
-    return [evaluate_letter(path, client) for path in sorted(letters_dir.glob("*.txt"))]
+def run_eval(letters_dir: Path, client: LLMClient, limit: int | None = None) -> list[LetterResult]:
+    """Evaluate the letters in name order; with `limit`, only the first `limit` of them."""
+    return [evaluate_letter(path, client) for path in sorted(letters_dir.glob("*.txt"))[:limit]]
 
 
 def format_results(results: list[LetterResult], model: str, day: str) -> str:
-    header = "| Letter | Outcome | Deadlines | Amounts | Dates | Not sure | Dropped | Model calls |"
+    header = "| Letter | Outcome | Deadlines | Amounts | Dates | Extra | Not sure | Dropped | Model calls |"
     lines = [
         "# Eval results",
         "",
         f"Model: `{model}`. Run on {day}. Letters: {len(results)}.",
         "",
         header,
-        "|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|",
         *(_row(result.letter, result.outcome, result.comparison, result.model_calls) for result in results),
         _row("**Total**", _total_outcome(results), _total(results), sum(r.model_calls for r in results)),
         "",
         "Deadlines, amounts and dates: answer-key values found as verified facts of the same kind.",
+        "Extra: verified deadlines, amounts and dates that are not in the answer key.",
         "Not sure and dropped: facts the verify step marked not sure or dropped.",
         "Model calls include retries.",
     ]
@@ -124,7 +129,8 @@ def format_results(results: list[LetterResult], model: str, day: str) -> str:
 
 def _row(letter: str, result_outcome: str, comparison: Comparison, calls: int) -> str:
     scores = " | ".join(f"{comparison.correct[kind]}/{comparison.expected[kind]}" for kind in SCORED_KINDS)
-    return f"| {letter} | {result_outcome} | {scores} | {comparison.not_sure} | {comparison.dropped} | {calls} |"
+    counts = f"{comparison.extra} | {comparison.not_sure} | {comparison.dropped} | {calls}"
+    return f"| {letter} | {result_outcome} | {scores} | {counts} |"
 
 
 def _total(results: list[LetterResult]) -> Comparison:
@@ -133,6 +139,7 @@ def _total(results: list[LetterResult]) -> Comparison:
         expected={kind: sum(r.comparison.expected[kind] for r in results) for kind in SCORED_KINDS},
         not_sure=sum(r.comparison.not_sure for r in results),
         dropped=sum(r.comparison.dropped for r in results),
+        extra=sum(r.comparison.extra for r in results),
     )
 
 
@@ -141,21 +148,40 @@ def _total_outcome(results: list[LetterResult]) -> str:
 
 
 def main(
+    argv: Sequence[str] = (),
     output: Path = RESULTS_PATH,
     letters_dir: Path = LETTERS_DIR,
     client_factory: Callable[[], LLMClient] = ClaudeClient,
 ) -> int:
+    args = _parse_args(argv)
     configure_logging()
     try:
         client = client_factory()
     except LLMError as error:
         print(error, file=sys.stderr)
         return 1
-    table = format_results(run_eval(letters_dir, client), model=MODEL, day=date.today().isoformat())
+    results = run_eval(letters_dir, client, limit=args.limit)
+    table = format_results(results, model=MODEL, day=date.today().isoformat())
     output.write_text(table, encoding="utf-8")
     print(table)
     return 0
 
 
+def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="python -m eval.run", description="Run the eval with the real model.")
+    parser.add_argument("--limit", type=_positive_int, help="run only the first N letters")
+    return parser.parse_args(argv)
+
+
+def _positive_int(text: str) -> int:
+    try:
+        number = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be a whole number") from None
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be 1 or more")
+    return number
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
