@@ -94,6 +94,7 @@ BAD_ANSWERS = {
     "farsi placeholders differ": edited(0, farsi="کل مبلغ را بپردازید."),
     "unknown placeholder": edited(0, english="Pay {F9} by {F5}.", farsi="{F9} را تا {F5} بپردازید."),
     "english stronger than the letter": edited(0, english="You need to pay the full balance by {F5}."),
+    "farsi name in parentheses after the sender": edited(0, english="Pay {F1} the full balance by {F5}.", farsi="کل مبلغ را تا {F5} به {F1} (اداره درآمد نورث‌فیلد) بپردازید."),
     "farsi stronger than the letter": edited(0, farsi="شما مجبور هستید کل مبلغ را تا {F5} بپردازید."),
 }
 

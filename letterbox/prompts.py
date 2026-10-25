@@ -53,8 +53,11 @@ or other information that is not in them.
 in digits or Persian digits. Where a fact's value is needed, write its placeholder: \
 the id in curly braces, such as {F2}. The placeholder is replaced with the exact \
 value from the letter.
-- Items for amount, deadline, date and reference facts must contain their own \
-placeholder in both the English and the Farsi text.
+- Items for amount, deadline, date, reference and sender facts must contain their \
+own placeholder in both the English and the Farsi text.
+- Write the sender's name only with its placeholder, so it is shown exactly as in \
+the letter. Never translate or transliterate the sender's name, and do not add a \
+Farsi version of it in parentheses.
 - Some facts are marked "not sure": their value is unknown. Still write their \
 placeholder; it is replaced with a note telling the reader to check with the sender. \
 Never guess the value.
@@ -90,6 +93,9 @@ the sender. Never guess the value.
 - Do not make the letter sound stronger than it is. Do not write "must", "need \
 to" or "have to", or "باید", "مجبور" or "لازم است" in Farsi, unless the fact has \
 "strong_wording": "yes". Write "The letter asks you to ..." instead.
+- Write the sender's name only with its placeholder, so it is shown exactly as in \
+the letter. Never translate or transliterate the sender's name, and do not add a \
+Farsi version of it in parentheses.
 - For a required_action marked "not sure", write a short option that contains its \
 placeholder, such as "Another step may apply: {F8}.", and no "farsi_condition".
 - If an action has a "condition", do not repeat the condition in "english"; the \
@@ -127,6 +133,9 @@ replaced with the exact value from the letter. If there is a reference fact, the
 reply must contain its placeholder.
 - A placeholder for a fact marked "not sure" is replaced with a note asking the \
 reader to check with the sender before sending. Never guess the value.
+- Write the sender's name only with its placeholder, so it is shown exactly as in \
+the letter. Never translate or transliterate the sender's name, and do not add a \
+Farsi version of it in parentheses.
 - Write "[Your name]" where the reader signs. Use plain, everyday English.
 
 The Farsi explanation says, in natural, everyday Persian, what the reply asks for \

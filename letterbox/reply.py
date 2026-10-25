@@ -14,6 +14,7 @@ from letterbox.llm import LLMClient
 from letterbox.placeholders import (
     NumberedFacts,
     check_known,
+    check_sender_name,
     check_own_words,
     describe_all,
     english_unconfirmed,
@@ -85,6 +86,7 @@ def draft_reply(verified: VerifiedFacts, client: LLMClient) -> Reply | NotSure:
 def _check(draft: Draft, facts: NumberedFacts) -> Draft:
     for where, text in (("reply", draft.reply), ("farsi_explanation", draft.farsi_explanation)):
         check_known(where, text, facts)
+        check_sender_name(where, text, facts)
         check_own_words(where, text)
     match = FAULT_OR_PROMISE.search(draft.reply)
     if match:

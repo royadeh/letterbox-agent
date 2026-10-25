@@ -14,6 +14,7 @@ from letterbox.placeholders import (
     NumberedFacts,
     check_known,
     check_not_stronger,
+    check_sender_name,
     check_own_words,
     describe_all,
     english_unconfirmed,
@@ -31,7 +32,9 @@ from letterbox.verify import VerifiedFacts
 
 __all__ = ["CHECK_WITH_SENDER_FA", "Explanation", "explain"]
 
-PLACEHOLDER_KINDS = frozenset({FactKind.AMOUNT, FactKind.DEADLINE, FactKind.DATE, FactKind.REFERENCE})
+PLACEHOLDER_KINDS = frozenset(
+    {FactKind.AMOUNT, FactKind.DEADLINE, FactKind.DATE, FactKind.REFERENCE, FactKind.SENDER}
+)
 
 
 class DraftItem(BaseModel):
@@ -97,6 +100,8 @@ def _check(draft: Draft, facts: NumberedFacts) -> Draft:
     for item in draft.items:
         _check_placeholders(item, facts)
         check_not_stronger(item.fact, facts[item.fact], item.english, item.farsi)
+        check_sender_name(item.fact, item.english, facts)
+        check_sender_name(item.fact, item.farsi, facts)
         check_own_words(item.fact, item.english)
         check_own_words(item.fact, item.farsi)
     return draft

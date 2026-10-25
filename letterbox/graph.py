@@ -33,8 +33,8 @@ NO_OPTIONS = "No actions were found in the letter."
 NO_OPTIONS_FA = "در این نامه اقدامی پیدا نشد."
 DISCLAIMER = "General information only, not legal or tax advice."
 DISCLAIMER_FA = "این فقط اطلاعات عمومی است، نه مشاوره حقوقی یا مالیاتی."
-REPLY_NOTE = "Sending this reply may not change any deadline in the letter."
-REPLY_NOTE_FA = "ارسال این پاسخ ممکن است هیچ‌یک از مهلت‌های نامه را تغییر ندهد."
+REPLY_NOTE = "Don’t assume that sending this reply changes any deadline in the letter."
+REPLY_NOTE_FA = "فرض نکنید که ارسال این پاسخ هیچ مهلتی را در نامه تغییر می‌دهد."
 
 Route = Literal["continue", "not_sure"]
 
