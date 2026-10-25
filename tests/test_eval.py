@@ -1,6 +1,8 @@
 import json
+import re
+import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
@@ -11,7 +13,9 @@ from eval.run import (
     LetterResult,
     compare,
     evaluate_letter,
+    RunInfo,
     format_results,
+    git_commit,
     main,
     outcome,
     run_eval,
@@ -163,13 +167,17 @@ def sample_results() -> list[LetterResult]:
     ]
 
 
+RUN_INFO = RunInfo(
+    model="claude-sonnet-5-5", run_at="2026-10-25 14:52 EDT", commit="734df1e", letters_run=2, letters_available=2
+)
+
+
 def test_results_table_has_a_row_per_letter_and_a_total() -> None:
-    table = format_results(sample_results(), model="claude-sonnet-5-5", day="2026-10-25")
+    table = format_results(sample_results(), RUN_INFO)
     assert "| Letter | Outcome | Deadlines | Amounts | Dates | Extra | Not sure | Dropped | Model calls |" in table
     assert "| 006_two_amounts_statement | ok | 1/1 | 2/2 | 0/0 | 0 | 0 | 0 | 3 |" in table
     assert "| 009_example | not sure at options | 0/1 | 1/2 | 0/0 | 1 | 1 | 2 | 5 |" in table
     assert "| **Total** | 1/2 ok | 1/2 | 3/4 | 0/0 | 1 | 1 | 2 | 8 |" in table
-    assert "claude-sonnet-5-5" in table and "2026-10-25" in table
 
 
 def test_main_without_an_api_key_writes_nothing(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -249,3 +257,68 @@ def test_main_rejects_a_limit_that_is_not_a_positive_number(limit: str, tmp_path
         main(["--limit", limit], output=tmp_path / "RESULTS.md")
     assert stopped.value.code == 2
     assert not (tmp_path / "RESULTS.md").exists()
+
+
+def test_header_shows_model_time_letters_and_commit() -> None:
+    table = format_results(sample_results(), RUN_INFO)
+    assert table.startswith("# Eval results\n")
+    assert "- Model: `claude-sonnet-5-5`" in table
+    assert "- Run at: 2026-10-25 14:52 EDT" in table
+    assert "- Letters run: 2\n" in table
+    assert "- Git commit: 734df1e" in table
+    assert "--limit" not in table
+
+
+def test_header_says_when_limit_was_used() -> None:
+    info = RunInfo(
+        model="claude-sonnet-5-5", run_at="2026-10-25 14:52 EDT", commit="734df1e",
+        letters_run=1, letters_available=8, limit=1,
+    )
+    assert "- Letters run: 1 of 8 (limited with --limit 1)" in format_results(sample_results()[:1], info)
+
+
+def test_header_comes_before_the_table() -> None:
+    table = format_results(sample_results(), RUN_INFO)
+    assert table.index("- Git commit:") < table.index("| Letter |")
+
+
+def test_git_commit_is_the_short_hash_of_head() -> None:
+    commit = git_commit()
+    assert commit == "unknown" or re.fullmatch(r"[0-9a-f]{7,}( \(with uncommitted changes\))?", commit)
+
+
+def fake_git(outputs: dict[str, str]) -> Callable[..., subprocess.CompletedProcess[str]]:
+    def run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(command, 0, stdout=outputs[command[1]], stderr="")
+
+    return run
+
+
+def test_git_commit_notes_uncommitted_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subprocess, "run", fake_git({"rev-parse": "abc1234\n", "status": " M eval/run.py\n"}))
+    assert git_commit() == "abc1234 (with uncommitted changes)"
+
+
+def test_git_commit_of_a_clean_tree(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subprocess, "run", fake_git({"rev-parse": "abc1234\n", "status": ""}))
+    assert git_commit() == "abc1234"
+
+
+def test_git_commit_without_git_is_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
+    def no_git(*args: Any, **kwargs: Any) -> None:
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(subprocess, "run", no_git)
+    assert git_commit() == "unknown"
+
+
+def test_main_header_with_limit(tmp_path: Path) -> None:
+    letters = tmp_path / "letters"
+    copy_letters(letters, ["006_two_amounts_statement", "007_messy_line_breaks"])
+    output = tmp_path / "RESULTS.md"
+    assert main(["--limit", "1"], output=output, letters_dir=letters, client_factory=lambda: FakeLLM(statement_responses())) == 0
+    table = output.read_text(encoding="utf-8")
+    assert "- Model: `claude-sonnet-5-5`" in table
+    assert "- Letters run: 1 of 2 (limited with --limit 1)" in table
+    assert re.search(r"- Run at: \d{4}-\d{2}-\d{2} \d{2}:\d{2}", table)
+    assert "- Git commit: " in table

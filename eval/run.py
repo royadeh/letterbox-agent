@@ -6,10 +6,11 @@ ANTHROPIC_API_KEY and costs money; it is not run in CI.
 
 import argparse
 import logging
+import subprocess
 import sys
 from collections import Counter
 from dataclasses import dataclass
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
@@ -47,6 +48,18 @@ class LetterResult:
     outcome: str
     comparison: Comparison
     model_calls: int
+
+
+@dataclass(frozen=True)
+class RunInfo:
+    """What the header of RESULTS.md says about the run."""
+
+    model: str
+    run_at: str
+    commit: str
+    letters_run: int
+    letters_available: int
+    limit: int | None = None
 
 
 class CountingClient:
@@ -102,17 +115,38 @@ def evaluate_letter(letter_path: Path, client: LLMClient) -> LetterResult:
     return LetterResult(letter_path.stem, outcome(state), comparison, counting.calls)
 
 
+def letter_paths(letters_dir: Path) -> list[Path]:
+    return sorted(letters_dir.glob("*.txt"))
+
+
 def run_eval(letters_dir: Path, client: LLMClient, limit: int | None = None) -> list[LetterResult]:
     """Evaluate the letters in name order; with `limit`, only the first `limit` of them."""
-    return [evaluate_letter(path, client) for path in sorted(letters_dir.glob("*.txt"))[:limit]]
+    return [evaluate_letter(path, client) for path in letter_paths(letters_dir)[:limit]]
 
 
-def format_results(results: list[LetterResult], model: str, day: str) -> str:
+def git_commit() -> str:
+    """The short commit hash, noting uncommitted changes, or "unknown" without git."""
+    try:
+        commit = _git("rev-parse", "--short", "HEAD")
+        changes = _git("status", "--porcelain", "--", ".", f":!{RESULTS_PATH.relative_to(ROOT)}")
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return f"{commit} (with uncommitted changes)" if changes else commit
+
+
+def _git(*args: str) -> str:
+    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+
+
+def format_results(results: list[LetterResult], info: RunInfo) -> str:
     header = "| Letter | Outcome | Deadlines | Amounts | Dates | Extra | Not sure | Dropped | Model calls |"
     lines = [
         "# Eval results",
         "",
-        f"Model: `{model}`. Run on {day}. Letters: {len(results)}.",
+        f"- Model: `{info.model}`",
+        f"- Run at: {info.run_at}",
+        f"- Letters run: {_letters_run(info)}",
+        f"- Git commit: {info.commit}",
         "",
         header,
         "|---|---|---|---|---|---|---|---|---|",
@@ -125,6 +159,12 @@ def format_results(results: list[LetterResult], model: str, day: str) -> str:
         "Model calls include retries.",
     ]
     return "\n".join(lines) + "\n"
+
+
+def _letters_run(info: RunInfo) -> str:
+    if info.limit is None:
+        return str(info.letters_run)
+    return f"{info.letters_run} of {info.letters_available} (limited with --limit {info.limit})"
 
 
 def _row(letter: str, result_outcome: str, comparison: Comparison, calls: int) -> str:
@@ -161,7 +201,15 @@ def main(
         print(error, file=sys.stderr)
         return 1
     results = run_eval(letters_dir, client, limit=args.limit)
-    table = format_results(results, model=MODEL, day=date.today().isoformat())
+    info = RunInfo(
+        model=MODEL,
+        run_at=datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z"),
+        commit=git_commit(),
+        letters_run=len(results),
+        letters_available=len(letter_paths(letters_dir)),
+        limit=args.limit,
+    )
+    table = format_results(results, info)
     output.write_text(table, encoding="utf-8")
     print(table)
     return 0
