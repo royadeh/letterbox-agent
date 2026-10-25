@@ -1,8 +1,10 @@
 import logging
+from collections.abc import Iterator
 from pathlib import Path
 
 import anthropic
 import pytest
+from anthropic._utils._logs import setup_logging
 
 from conftest import LETTERS_DIR, FakeLLM
 from letterbox.__main__ import main
@@ -55,3 +57,25 @@ def test_cli_model_call_error_prints_a_generic_message_with_a_reference(
     log = "\n".join(record.getMessage() for record in caplog.records)
     assert "connection reset" not in log
     assert "step=model_call error=FakeAPIError" in log
+
+
+SDK_LOGGERS = ("anthropic", "httpx2")
+
+
+@pytest.fixture
+def sdk_logger_levels() -> Iterator[None]:
+    saved = {name: logging.getLogger(name).level for name in SDK_LOGGERS}
+    yield
+    for name, level in saved.items():
+        logging.getLogger(name).setLevel(level)
+
+
+@pytest.mark.usefixtures("sdk_logger_levels")
+def test_cli_keeps_sdk_loggers_at_warning_even_with_anthropic_log_debug(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_LOG", "debug")
+    setup_logging()  # what the SDK does when it is imported
+    assert logging.getLogger("anthropic").isEnabledFor(logging.DEBUG)
+    main([str(LETTER_PATH)], client_factory=lambda: FakeLLM(["not json", "not json"]))
+    for name in SDK_LOGGERS:
+        assert not logging.getLogger(name).isEnabledFor(logging.INFO), name
+        assert logging.getLogger(name).isEnabledFor(logging.WARNING), name
