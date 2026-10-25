@@ -18,6 +18,7 @@ from letterbox.placeholders import (
     english_value,
     farsi_value,
     fill,
+    is_not_sure,
     number_facts,
     placeholders,
 )
@@ -108,7 +109,8 @@ def _check_placeholders(item: DraftItem, facts: NumberedFacts) -> None:
     if english != placeholders(item.farsi):
         raise ValueError(f"{item.fact}: English and Farsi must use the same placeholders.")
     check_known(item.fact, item.english, facts)
-    if facts[item.fact].fact.kind in PLACEHOLDER_KINDS and item.fact not in english:
+    checked = facts[item.fact]
+    if (checked.fact.kind in PLACEHOLDER_KINDS or is_not_sure(checked)) and item.fact not in english:
         raise ValueError(f"{item.fact}: must contain the placeholder {{{item.fact}}}.")
 
 

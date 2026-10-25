@@ -10,6 +10,7 @@ from letterbox.verify import VerifiedFacts, verify
 
 LETTERS_DIR = Path(__file__).resolve().parent.parent / "data" / "letters"
 WRONG_TAX_DEADLINE = "April 30, 2027"
+MADE_UP_CONDITION = "you have already paid"
 
 
 @dataclass(frozen=True)
@@ -48,8 +49,10 @@ def no_api_key_or_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "connect", refuse)
 
 
-def tax_letter_verified() -> VerifiedFacts:
+def tax_letter_verified(condition: str | None = None) -> VerifiedFacts:
     """Letter 001's facts, with the payment deadline (F5) wrong so it is marked not sure.
+
+    `condition` replaces F8's condition, to test a made-up one.
 
     F1 sender, F2 reference, F3 purpose, F4 amount, F5 deadline (not sure),
     F6 relative deadline, F7 action, F8 conditional action.
@@ -61,4 +64,6 @@ def tax_letter_verified() -> VerifiedFacts:
         for fact in key.facts
     ]
     assert [fact.kind for fact in facts][4] is FactKind.DEADLINE
+    if condition is not None:
+        facts[7] = facts[7].model_copy(update={"condition": condition})
     return verify(LetterFacts(facts=facts), letter.read_text(encoding="utf-8"))

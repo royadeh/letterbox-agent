@@ -42,18 +42,22 @@ def describe_all(facts: NumberedFacts) -> str:
 
 
 def _describe(fact_id: str, checked: CheckedFact) -> dict[str, str]:
-    """What the model sees. A not-sure fact's value is never sent."""
+    """What the model sees. A not-sure fact's value and condition are never sent."""
     fact = checked.fact
     entry = {"id": fact_id, "kind": fact.kind.value}
     if fact.label:
         entry["label"] = fact.label
     if checked.status is FactStatus.NOT_SURE:
         entry["status"] = "not sure"
-    else:
-        entry["value"] = fact.value
+        return entry
+    entry["value"] = fact.value
     if fact.condition:
         entry["condition"] = fact.condition
     return entry
+
+
+def is_not_sure(checked: CheckedFact) -> bool:
+    return checked.status is FactStatus.NOT_SURE
 
 
 def placeholders(text: str) -> set[str]:

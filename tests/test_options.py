@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from conftest import WRONG_TAX_DEADLINE, FakeLLM, tax_letter_verified
+from conftest import MADE_UP_CONDITION, WRONG_TAX_DEADLINE, FakeLLM, tax_letter_verified
 from letterbox.extract import NotSure
 from letterbox.options import Options, list_options
 from letterbox.prompts import OPTIONS_SYSTEM_PROMPT
@@ -118,3 +118,38 @@ def test_no_verified_actions_gives_no_options_without_calling_the_model() -> Non
     result = list_options(verify(only_sender, "Greenfield Transit Authority"), llm)
     assert result == Options(items=[])
     assert llm.calls == []
+
+
+# F8's condition is made up, so verify marks the action not sure.
+NOT_SURE_ACTION = tax_letter_verified(condition=MADE_UP_CONDITION)
+NOT_SURE_OPTIONS: list[dict[str, str]] = [
+    GOOD_OPTIONS[0],
+    {"fact": "F8", "english": "Another step may apply: {F8}.", "farsi": "ممکن است کار دیگری هم لازم باشد: {F8}."},
+]
+
+
+def test_not_sure_action_is_listed_as_check_with_sender_without_its_condition() -> None:
+    llm = FakeLLM([answer(NOT_SURE_OPTIONS)])
+    result = list_options(NOT_SURE_ACTION, llm)
+    assert isinstance(result, Options)
+    assert result.english.splitlines()[1] == f"Another step may apply: {CHECK_WITH_SENDER}."
+    assert MADE_UP_CONDITION not in result.english
+    assert MADE_UP_CONDITION not in llm.calls[0].user
+    assert "File a notice of objection." not in llm.calls[0].user
+
+
+NOT_SURE_BAD_ANSWERS = {
+    "farsi condition on a not-sure action": answer(
+        [NOT_SURE_OPTIONS[0], {**NOT_SURE_OPTIONS[1], "farsi_condition": FARSI_CONDITION}]
+    ),
+    "not-sure action without its placeholder": answer(
+        [NOT_SURE_OPTIONS[0], {"fact": "F8", "english": "File an objection.", "farsi": "اعتراض کنید."}]
+    ),
+}
+
+
+@pytest.mark.parametrize("bad", NOT_SURE_BAD_ANSWERS.values(), ids=NOT_SURE_BAD_ANSWERS.keys())
+def test_invalid_answer_for_a_not_sure_action_is_retried_once(bad: str) -> None:
+    llm = FakeLLM([bad, answer(NOT_SURE_OPTIONS)])
+    assert isinstance(list_options(NOT_SURE_ACTION, llm), Options)
+    assert len(llm.calls) == 2

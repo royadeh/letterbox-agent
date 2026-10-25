@@ -1,7 +1,8 @@
 """Options step: the reader's options, built only from verified required actions.
 
 A conditional action always shows its condition: the code puts the condition,
-copied from the letter, in front of the option.
+copied from the letter, in front of the option. An action marked not sure (its
+condition was not in its sentence) is listed as "check with the sender".
 """
 
 from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
@@ -16,12 +17,13 @@ from letterbox.placeholders import (
     english_value,
     farsi_value,
     fill,
+    is_not_sure,
     number_facts,
     placeholders,
 )
 from letterbox.prompts import OPTIONS_SYSTEM_PROMPT, facts_user_message
 from letterbox.schema import FactKind
-from letterbox.verify import FactStatus, VerifiedFacts
+from letterbox.verify import CheckedFact, VerifiedFacts
 
 
 class DraftOption(BaseModel):
@@ -85,11 +87,12 @@ def list_options(verified: VerifiedFacts, client: LLMClient) -> Options | NotSur
 
 
 def _action_ids(facts: NumberedFacts) -> list[str]:
-    return [
-        fact_id
-        for fact_id, checked in facts.items()
-        if checked.fact.kind is FactKind.REQUIRED_ACTION and checked.status is FactStatus.VERIFIED
-    ]
+    return [fact_id for fact_id, checked in facts.items() if checked.fact.kind is FactKind.REQUIRED_ACTION]
+
+
+def _shown_condition(checked: CheckedFact) -> str | None:
+    """The condition to show, or None. A not-sure action's condition is never shown."""
+    return None if is_not_sure(checked) else checked.fact.condition
 
 
 def _check(draft: Draft, facts: NumberedFacts, actions: list[str]) -> Draft:
@@ -103,7 +106,7 @@ def _check(draft: Draft, facts: NumberedFacts, actions: list[str]) -> Draft:
 
 
 def _check_condition(option: DraftOption, facts: NumberedFacts) -> None:
-    has_condition = facts[option.fact].fact.condition is not None
+    has_condition = _shown_condition(facts[option.fact]) is not None
     if has_condition and option.farsi_condition is None:
         raise ValueError(f"{option.fact}: this action has a condition; give it in farsi_condition.")
     if not has_condition and option.farsi_condition is not None:
@@ -111,8 +114,11 @@ def _check_condition(option: DraftOption, facts: NumberedFacts) -> None:
 
 
 def _check_option_text(option: DraftOption, facts: NumberedFacts) -> None:
-    if placeholders(option.english) != placeholders(option.farsi):
+    english = placeholders(option.english)
+    if english != placeholders(option.farsi):
         raise ValueError(f"{option.fact}: English and Farsi must use the same placeholders.")
+    if is_not_sure(facts[option.fact]) and option.fact not in english:
+        raise ValueError(f"{option.fact}: this action is not sure; write only its placeholder {{{option.fact}}}.")
     for text in (option.english, option.farsi, option.farsi_condition or ""):
         check_known(option.fact, text, facts)
         check_own_words(option.fact, text)
@@ -125,7 +131,7 @@ def _render(draft: Draft, facts: NumberedFacts) -> Options:
 def _render_option(option: DraftOption, facts: NumberedFacts) -> Option:
     english = fill(option.english, facts, english_value)
     farsi = fill(option.farsi, facts, farsi_value)
-    condition = facts[option.fact].fact.condition
+    condition = _shown_condition(facts[option.fact])
     if condition is not None and option.farsi_condition is not None:
         english = f"If {condition}: {english}"
         farsi = f"اگر {fill(option.farsi_condition, facts, farsi_value)}: {farsi}"

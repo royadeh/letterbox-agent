@@ -84,6 +84,8 @@ is replaced with the exact value from the letter.
 - Some facts are marked "not sure": their value is unknown. If you need one, still \
 write its placeholder; it is replaced with a note telling the reader to check with \
 the sender. Never guess the value.
+- For a required_action marked "not sure", write a short option that contains its \
+placeholder, such as "Another step may apply: {F8}.", and no "farsi_condition".
 - If an action has a "condition", do not repeat the condition in "english"; the \
 code shows the condition before the option. Put the condition in Farsi in \
 "farsi_condition", without the word for "if". Leave out "farsi_condition" for \

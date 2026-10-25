@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from conftest import FakeLLM
+from conftest import MADE_UP_CONDITION, FakeLLM, tax_letter_verified
 from letterbox.explain import CHECK_WITH_SENDER_FA, Explanation, explain
 from letterbox.extract import NotSure
 from letterbox.prompts import EXPLAIN_SYSTEM_PROMPT
@@ -138,3 +138,18 @@ def test_no_verified_facts_returns_not_sure_without_calling_the_model() -> None:
     result = explain(VerifiedFacts(facts=[], dropped=[]), llm)
     assert isinstance(result, NotSure)
     assert llm.calls == []
+
+
+def test_not_sure_action_needs_its_placeholder_and_its_condition_is_not_sent() -> None:
+    verified = tax_letter_verified(condition=MADE_UP_CONDITION)
+    items = [
+        {"fact": f"F{n}", "english": f"Fact {{F{n}}}.", "farsi": f"نکته {{F{n}}}."} for n in range(1, 9)
+    ]
+    without_placeholder = copy.deepcopy(items)
+    without_placeholder[7] = {"fact": "F8", "english": "You may object.", "farsi": "می‌توانید اعتراض کنید."}
+    llm = FakeLLM([answer(without_placeholder), answer(items)])
+    result = explain(verified, llm)
+    assert isinstance(result, Explanation)
+    assert len(llm.calls) == 2
+    assert result.items[7].english == f"Fact {CHECK_WITH_SENDER}."
+    assert MADE_UP_CONDITION not in llm.calls[0].user
