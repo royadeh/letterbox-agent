@@ -10,16 +10,14 @@ import anthropic
 
 from letterbox.graph import new_run_id, run
 from letterbox.llm import ClaudeClient, LLMClient, LLMError
+from letterbox.logging_setup import configure_logging
 
 logger = logging.getLogger("letterbox")
-# The SDK's own debug logs can include the request, and so the letter.
-SDK_LOGGERS = ("anthropic", "httpx2")
 
 
 def main(argv: Sequence[str] | None = None, client_factory: Callable[[], LLMClient] = ClaudeClient) -> int:
     args = _parse_args(argv)
-    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
-    _quiet_sdk_loggers()
+    configure_logging()
     letter = _read_letter(Path(args.letter_file))
     if letter is None:
         print("Could not read the letter file.", file=sys.stderr)
@@ -30,12 +28,6 @@ def main(argv: Sequence[str] | None = None, client_factory: Callable[[], LLMClie
         print(error, file=sys.stderr)
         return 1
     return _run_and_print(letter, client)
-
-
-def _quiet_sdk_loggers() -> None:
-    """Keep SDK loggers at warning, even if ANTHROPIC_LOG=debug was set."""
-    for name in SDK_LOGGERS:
-        logging.getLogger(name).setLevel(logging.WARNING)
 
 
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
