@@ -1,8 +1,9 @@
 """The Letterbox graph: extract -> verify -> explain -> options -> reply.
 
 Any step that cannot give a trustworthy answer takes the "I'm not sure" path.
-The technical reason goes to the log with the run's reference; the reader
-sees only "I'm not sure, check with the sender" and that reference.
+The log gets only the step, the error type, the run's reference and counts,
+never letter text or the model's answer. The reader sees only "I'm not sure,
+check with the sender" and that reference.
 """
 
 import logging
@@ -122,30 +123,30 @@ def _route(state: State) -> Route:
 def _extract(state: State, client: LLMClient) -> State:
     result = extract(state["letter"], client)
     if isinstance(result, NotSure):
-        return _fail(state, "extract", result.reason)
+        return _fail(state, "extract", result.error_type, attempts=result.attempts)
     return {"facts": result}
 
 
 def _verify(state: State) -> State:
     verified = verify(state["facts"], state["letter"])
-    if verified.dropped:
-        logger.info("run %s: verify dropped %d unsupported facts", state["run_id"], len(verified.dropped))
+    facts, dropped = len(state["facts"].facts), len(verified.dropped)
+    logger.info("run %s: step=verify facts=%d dropped=%d", state["run_id"], facts, dropped)
     if not verified.facts:
-        return _fail(state, "verify", "No facts could be checked against the letter.")
+        return _fail(state, "verify", "NoVerifiedFacts", facts=facts, dropped=dropped)
     return {"verified": verified}
 
 
 def _explain(state: State, client: LLMClient) -> State:
     result = explain(state["verified"], client)
     if isinstance(result, NotSure):
-        return _fail(state, "explain", result.reason)
+        return _fail(state, "explain", result.error_type, attempts=result.attempts)
     return {"explanation": result}
 
 
 def _options(state: State, client: LLMClient) -> State:
     result = list_options(state["verified"], client)
     if isinstance(result, NotSure):
-        _log_not_sure(state, "options", result.reason)
+        _log_not_sure(state, "options", result.error_type, attempts=result.attempts)
         return {"option_list": None}
     return {"option_list": result}
 
@@ -153,18 +154,20 @@ def _options(state: State, client: LLMClient) -> State:
 def _reply(state: State, client: LLMClient) -> State:
     result = draft_reply(state["verified"], client)
     if isinstance(result, NotSure):
-        _log_not_sure(state, "reply", result.reason)
+        _log_not_sure(state, "reply", result.error_type, attempts=result.attempts)
         return {"reply_draft": None}
     return {"reply_draft": result}
 
 
-def _fail(state: State, step: str, reason: str) -> State:
-    _log_not_sure(state, step, reason)
+def _fail(state: State, step: str, error_type: str, **counts: int) -> State:
+    _log_not_sure(state, step, error_type, **counts)
     return {"failed": True}
 
 
-def _log_not_sure(state: State, step: str, reason: str) -> None:
-    logger.warning("run %s: %s step is not sure: %s", state["run_id"], step, reason)
+def _log_not_sure(state: State, step: str, error_type: str, **counts: int) -> None:
+    """Log only the step, error type, reference and counts: never letter or model text."""
+    details = "".join(f" {name}={count}" for name, count in counts.items())
+    logger.warning("run %s: step=%s not sure: error=%s%s", state["run_id"], step, error_type, details)
 
 
 def _not_sure_lines(run_id: str) -> tuple[str, str]:

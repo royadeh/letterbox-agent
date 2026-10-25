@@ -70,7 +70,7 @@ def test_answer_text_shows_english_then_farsi_and_the_disclaimer() -> None:
     assert "General information only, not legal or tax advice." in text
 
 
-def test_extract_failure_shows_only_not_sure_and_logs_the_reason(caplog: pytest.LogCaptureFixture) -> None:
+def test_extract_failure_shows_only_not_sure_and_logs_the_error_type(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.WARNING, logger="letterbox")
     answer, llm = run_with([BAD, BAD])
     assert len(llm.calls) == 2
@@ -78,7 +78,7 @@ def test_extract_failure_shows_only_not_sure_and_logs_the_reason(caplog: pytest.
     assert answer.explanation_fa == not_sure_line(farsi=True)
     assert answer.options_en == answer.reply_en == ""
     assert "validation error" not in answer.text().lower()
-    assert any("extract" in r.getMessage() and RUN_ID in r.getMessage() and "validation error" in r.getMessage().lower()
+    assert any("step=extract" in r.getMessage() and RUN_ID in r.getMessage() and "error=ValidationError" in r.getMessage()
                for r in caplog.records)
 
 
@@ -122,3 +122,36 @@ def test_each_run_gets_its_own_reference_by_default() -> None:
     second = run(LETTER, FakeLLM([BAD, BAD]))
     assert first.explanation_en != second.explanation_en
     assert first.explanation_en.startswith(READER_NOT_SURE)
+
+
+MODEL_MARKER = "MODEL-ANSWER-7f3a"
+LETTER_LINES = [line.strip() for line in LETTER.splitlines() if line.strip()]
+MODEL_TEXT_BAD = f"Sorry, {LETTER_LINES[6]} {MODEL_MARKER}"
+SCHEMA_BAD = json.dumps({"facts": [{"kind": "amount", "value": f"$1,284.50 {MODEL_MARKER}"}]})
+EXPLAIN_BAD = json.dumps(
+    {"items": [{"fact": "F1", "english": f"Pay $1,284.50 now {MODEL_MARKER}", "farsi": "نکته"}]}
+)
+VERIFY_BAD = json.dumps(
+    {"facts": [{"kind": "purpose", "value": f"{LETTER_LINES[6]} {MODEL_MARKER}", "evidence": f"Made up {MODEL_MARKER}."}]}
+)
+LOG_CASES = {
+    "extract, model text": ([MODEL_TEXT_BAD, MODEL_TEXT_BAD], "step=extract", "error=ValidationError attempts=2"),
+    "extract, schema": ([SCHEMA_BAD, SCHEMA_BAD], "step=extract", "error=ValidationError attempts=2"),
+    "verify": ([VERIFY_BAD], "step=verify", "error=NoVerifiedFacts facts=1 dropped=1"),
+    "explain": ([EXTRACT_OK, EXPLAIN_BAD, EXPLAIN_BAD], "step=explain", "error=ValueError attempts=2"),
+    "options": ([EXTRACT_OK, EXPLAIN_OK, EXPLAIN_BAD, EXPLAIN_BAD, REPLY_OK], "step=options", "error=ValidationError attempts=2"),
+    "reply": ([EXTRACT_OK, EXPLAIN_OK, OPTIONS_OK, MODEL_TEXT_BAD, MODEL_TEXT_BAD], "step=reply", "error=ValidationError attempts=2"),
+}
+
+
+@pytest.mark.parametrize("responses, step, details", LOG_CASES.values(), ids=LOG_CASES.keys())
+def test_log_has_no_letter_or_model_text_only_step_error_reference_and_counts(
+    caplog: pytest.LogCaptureFixture, responses: list[str], step: str, details: str
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    run_with(responses)
+    log = "\n".join(record.getMessage() for record in caplog.records)
+    assert MODEL_MARKER not in log
+    for fragment in [*LETTER_LINES, "$1,284.50", "TEST-REF-001"]:
+        assert fragment not in log, f"letter text in log: {fragment!r}"
+    assert f"run {RUN_ID}: {step} not sure: {details}" in log

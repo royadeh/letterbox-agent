@@ -52,4 +52,6 @@ def test_cli_model_call_error_prints_a_generic_message_with_a_reference(
     assert exit_code == 1
     assert "Something went wrong. (Reference: " in captured.err
     assert "connection reset" not in captured.err + captured.out
-    assert any("connection reset" in record.getMessage() for record in caplog.records)
+    log = "\n".join(record.getMessage() for record in caplog.records)
+    assert "connection reset" not in log
+    assert "step=model_call error=FakeAPIError" in log

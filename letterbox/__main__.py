@@ -49,7 +49,7 @@ def _run_and_print(letter: str, client: LLMClient) -> int:
     try:
         answer = run(letter, client, run_id=run_id)
     except anthropic.APIError as error:
-        logger.error("run %s: model call failed: %s", run_id, error)
+        logger.error("run %s: step=model_call error=%s", run_id, type(error).__name__)
         print(f"Something went wrong. (Reference: {run_id})", file=sys.stderr)
         return 1
     print(answer.text())

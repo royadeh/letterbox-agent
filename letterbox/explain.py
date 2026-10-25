@@ -81,7 +81,7 @@ class Explanation(BaseModel):
 def explain(verified: VerifiedFacts, client: LLMClient) -> Explanation | NotSure:
     facts = number_facts(verified)
     if not facts:
-        return NotSure(reason="No verified facts to explain.")
+        return NotSure(error_type="NoVerifiedFacts")
 
     def parse(text: str) -> Explanation:
         return _render(_check(Draft.model_validate_json(text), facts), facts)
