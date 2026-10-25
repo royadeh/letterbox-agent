@@ -1,8 +1,16 @@
 import socket
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import pytest
+
+from letterbox.schema import FactKind, LetterFacts
+from letterbox.verify import VerifiedFacts, verify
+
+LETTERS_DIR = Path(__file__).resolve().parent.parent / "data" / "letters"
+WRONG_TAX_DEADLINE = "April 30, 2027"
+MADE_UP_CONDITION = "you have already paid"
 
 
 @dataclass(frozen=True)
@@ -39,3 +47,23 @@ def no_api_key_or_network(monkeypatch: pytest.MonkeyPatch) -> None:
         raise RuntimeError("Tests must not use the network.")
 
     monkeypatch.setattr(socket.socket, "connect", refuse)
+
+
+def tax_letter_verified(condition: str | None = None) -> VerifiedFacts:
+    """Letter 001's facts, with the payment deadline (F5) wrong so it is marked not sure.
+
+    `condition` replaces F8's condition, to test a made-up one.
+
+    F1 sender, F2 reference, F3 purpose, F4 amount, F5 deadline (not sure),
+    F6 relative deadline, F7 action, F8 conditional action.
+    """
+    letter = LETTERS_DIR / "001_tax_reassessment.txt"
+    key = LetterFacts.model_validate_json(letter.with_suffix(".expected.json").read_text(encoding="utf-8"))
+    facts = [
+        fact.model_copy(update={"value": WRONG_TAX_DEADLINE}) if fact.value == "March 31, 2027" else fact
+        for fact in key.facts
+    ]
+    assert [fact.kind for fact in facts][4] is FactKind.DEADLINE
+    if condition is not None:
+        facts[7] = facts[7].model_copy(update={"condition": condition})
+    return verify(LetterFacts(facts=facts), letter.read_text(encoding="utf-8"))

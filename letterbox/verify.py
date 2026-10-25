@@ -48,18 +48,20 @@ def verify(extraction: LetterFacts, letter: str) -> VerifiedFacts:
     checked: list[CheckedFact] = []
     dropped: list[Fact] = []
     for fact in extraction.facts:
-        if _is_supported(fact, letter):
-            checked.append(CheckedFact(fact=fact, status=FactStatus.VERIFIED))
-        elif fact.kind in NEVER_GUESS_KINDS:
-            checked.append(CheckedFact(fact=fact, status=FactStatus.NOT_SURE))
-        else:
+        status = _status(fact, letter)
+        if status is None:
             dropped.append(fact)
+        else:
+            checked.append(CheckedFact(fact=fact, status=status))
     return VerifiedFacts(facts=checked, dropped=dropped)
 
 
-def _is_supported(fact: Fact, letter: str) -> bool:
+def _status(fact: Fact, letter: str) -> FactStatus | None:
+    """The fact's status, or None if it should be dropped."""
     if not appears_in(fact.evidence, letter):
-        return False
-    if fact.kind in NEVER_GUESS_KINDS:
-        return appears_in(fact.value, fact.evidence)
-    return True
+        return FactStatus.NOT_SURE if fact.kind in NEVER_GUESS_KINDS else None
+    if fact.kind in NEVER_GUESS_KINDS and not appears_in(fact.value, fact.evidence):
+        return FactStatus.NOT_SURE
+    if fact.condition is not None and not appears_in(fact.condition, fact.evidence):
+        return FactStatus.NOT_SURE
+    return FactStatus.VERIFIED

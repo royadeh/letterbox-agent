@@ -91,3 +91,43 @@ def test_made_up_quote_on_a_date_is_marked_not_sure() -> None:
     result = verify(facts(made_up), RENT_LETTER)
     assert result.facts[0].status is FactStatus.NOT_SURE
     assert result.dropped == []
+
+
+TAX_LETTER = (LETTERS_DIR / "001_tax_reassessment.txt").read_text(encoding="utf-8")
+OBJECTION_EVIDENCE = (
+    "If you disagree with this reassessment, you may file a notice of objection "
+    "within 90 days of the date of this notice."
+)
+
+
+def test_made_up_condition_on_a_real_action_is_marked_not_sure() -> None:
+    action = fact(
+        kind="required_action",
+        condition="you have already paid",
+        value="File a notice of objection.",
+        evidence=OBJECTION_EVIDENCE,
+    )
+    result = verify(facts(action), TAX_LETTER)
+    assert result.facts[0].status is FactStatus.NOT_SURE
+    assert result.facts[0].display_value == CHECK_WITH_SENDER
+    assert result.dropped == []
+
+
+def test_real_condition_on_a_real_action_verifies() -> None:
+    action = fact(
+        kind="required_action",
+        condition="you disagree with this reassessment",
+        value="File a notice of objection.",
+        evidence=OBJECTION_EVIDENCE,
+    )
+    assert verify(facts(action), TAX_LETTER).facts[0].status is FactStatus.VERIFIED
+
+
+def test_made_up_quote_on_a_conditional_action_is_still_dropped() -> None:
+    action = fact(
+        kind="required_action",
+        condition="you disagree with this reassessment",
+        value="File a notice of objection.",
+        evidence=MADE_UP_QUOTE,
+    )
+    assert verify(facts(action), TAX_LETTER).dropped == [action]
