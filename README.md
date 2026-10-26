@@ -41,9 +41,43 @@ python -m letterbox letter.txt
 
 The letter must be a plain text file.
 
+## Input and output
+
+**Input:** one letter, as plain English text in a `.txt` file. All letters in
+`data/letters/` are synthetic. Don't use real letters: they contain personal
+details, and the text is sent to the Claude API.
+
+Example input:
+[`data/letters/001_tax_reassessment.txt`](data/letters/001_tax_reassessment.txt)
+
+```sh
+python -m letterbox letter.txt --html out.html
+```
+
+**Output:**
+
+- The terminal prints the answer in English, then in Farsi. Terminals draw
+  Farsi in the wrong order, so read the Farsi in the HTML page.
+- `out.html` is a page with the Explanation, Your options, the Reply draft and
+  a disclaimer. The Farsi is shown right to left, and all text is escaped.
+- If a fact can't be verified, the page shows "not sure, check with the
+  sender" in its place.
+
+Output of one real run on a synthetic letter.
+
+![Explanation, in English and Farsi](docs/images/explanation.png)
+
+![Your options, in English and Farsi](docs/images/options.png)
+
+![Reply draft, with its Farsi explanation](docs/images/reply.png)
+
 ## Running the tests
 
-The tests use a fake model, so they need no API key and no network.
+The automated tests don't call Claude. They feed the program answers I wrote in
+advance, including broken and made-up ones, to check that my safety rules catch
+them. I ran the real model by hand on one synthetic letter. An evaluation
+script exists in `eval/` but has not been run on the full set, so no accuracy
+figures are claimed. The tests need no API key and no network.
 
 ```sh
 pip install ".[dev]"
@@ -64,13 +98,18 @@ checks and tests:
 
 - Numbers written in words, such as "thirty days", may slip past the checks.
 - A phrase list can't catch every way of admitting fault or promising payment.
-- Tested with automated tests that use a fake model. The real model was run by
-  hand on one synthetic letter. An evaluation script exists in `eval/` but has
-  not been run on the full set, so no accuracy figures are claimed.
+- Tested with automated tests that use answers written in advance. The real
+  model was run by hand on one synthetic letter. An evaluation script exists in
+  `eval/` but has not been run on the full set, so no accuracy figures are
+  claimed.
 - The Farsi was read by hand on one letter only.
-- The Farsi explanation of the reply draft may use wording that reads
-  ambiguously or too strongly. A stricter check for it exists on an unmerged
-  branch (`reply-wording`).
+- The Farsi explanation of the reply draft is checked for wording stronger than
+  the letter's. The check can reject the whole explanation, in which case that
+  section shows "I'm not sure".
+- The options section can show a doubled "If" before a condition ("If If you
+  disagree...").
+- The Farsi terms for "notice of objection" and "reassessment" vary between
+  sections.
 
 ## Disclaimer
 
