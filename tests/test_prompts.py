@@ -69,3 +69,11 @@ def test_reply_prompt_asks_for_a_neutral_reply() -> None:
 def test_prompts_say_never_to_translate_the_senders_name(prompt: str) -> None:
     text = {"explain": EXPLAIN_SYSTEM_PROMPT, "options": OPTIONS_SYSTEM_PROMPT, "reply": REPLY_SYSTEM_PROMPT}[prompt].lower()
     assert "never translate or transliterate the sender's name" in text
+
+
+def test_reply_prompt_says_the_explanation_describes_no_admission_not_non_acceptance() -> None:
+    explanation_rules = REPLY_SYSTEM_PROMPT.split("The Farsi explanation", 1)[1]
+    assert "does not admit any mistake or debt" in explanation_rules
+    assert "اقرار نمی‌شود" in explanation_rules
+    assert "does not accept" not in explanation_rules
+    assert "نمی‌پذیر" in explanation_rules  # named only as wording to avoid

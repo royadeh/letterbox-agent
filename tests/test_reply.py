@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from conftest import WRONG_TAX_DEADLINE, FakeLLM, tax_letter_verified
+from conftest import LETTERS_DIR, WRONG_TAX_DEADLINE, FakeLLM, tax_letter_verified
 from letterbox.explain import CHECK_WITH_SENDER_FA
 from letterbox.extract import NotSure
 from letterbox.prompts import REPLY_SYSTEM_PROMPT
@@ -139,3 +139,31 @@ def test_not_sure_deadline_after_by_in_the_reply_becomes_a_bracketed_note() -> N
         in result.english
     )
     assert WRONG_TAX_DEADLINE not in result.english
+
+
+@pytest.mark.parametrize(
+    "farsi",
+    [
+        "این پیش‌نویس می‌گوید شما باید {F6} اعتراض کنید.",
+        "این پیش‌نویس می‌گوید لازم است مدارک را بفرستید.",
+        "این پیش‌نویس می‌گوید شما مجبور هستید پاسخ دهید.",
+        "This draft says you must reply.",
+    ],
+)
+def test_reply_explanation_stronger_than_the_letter_is_retried(farsi: str) -> None:
+    llm = FakeLLM([answer(farsi=farsi), GOOD])
+    assert isinstance(draft_reply(VERIFIED, llm), Reply)
+    assert len(llm.calls) == 2
+
+
+UTILITY = LETTERS_DIR / "003_utility_disconnection.txt"
+
+
+def test_reply_explanation_may_use_strong_wording_for_a_fact_the_letter_states_strongly() -> None:
+    key = LetterFacts.model_validate_json(UTILITY.with_suffix(".expected.json").read_text(encoding="utf-8"))
+    verified = verify(key, UTILITY.read_text(encoding="utf-8"))
+    reply = "Dear {F1},\n\nRe: {F2}\n\nThank you for your letter.\n\nSincerely,\n[Your name]"
+    farsi = "نامه می‌گوید باید مبلغ را تا {F5} بپردازید."  # F5: "you must pay the overdue amount by ..."
+    llm = FakeLLM([answer(reply=reply, farsi=farsi)])
+    assert isinstance(draft_reply(verified, llm), Reply)
+    assert len(llm.calls) == 1
