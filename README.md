@@ -43,7 +43,7 @@ The letter must be a plain text file.
 
 ## Running the tests
 
-The tests use a fake model, so they need no API key and no network.
+The tests use a fake model, so they need no API key and no network. In other words, the automated tests don’t call Claude. They feed the program answers I wrote in advance, including broken and made-up ones, to check that my safety rules catch them. I ran the real model by hand on one synthetic letter.
 
 ```sh
 pip install ".[dev]"
