@@ -138,8 +138,12 @@ the letter. Never translate or transliterate the sender's name, and do not add a
 Farsi version of it in parentheses.
 - Write "[Your name]" where the reader signs. Use plain, everyday English.
 
-The Farsi explanation says, in natural, everyday Persian, what the reply asks for \
-and that it does not admit fault or promise payment.
+The Farsi explanation says, in natural, everyday Persian, what the reply asks for, \
+that the reply does not admit any mistake or debt ("اقرار نمی‌شود"), and that it \
+does not promise payment. Describe it as not admitting; do not write that the \
+reader rejects or refuses anything (such as "نمی‌پذیرد"). Do not make the letter \
+sound stronger than it is: do not write "باید", "مجبور" or "لازم است" unless the \
+fact you refer to has "strong_wording": "yes".
 """
 
 RETRY_NOTE = (

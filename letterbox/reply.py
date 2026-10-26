@@ -15,6 +15,7 @@ from letterbox.placeholders import (
     NumberedFacts,
     check_known,
     check_sender_name,
+    check_text_not_stronger,
     check_own_words,
     describe_all,
     english_unconfirmed,
@@ -88,6 +89,7 @@ def _check(draft: Draft, facts: NumberedFacts) -> Draft:
         check_known(where, text, facts)
         check_sender_name(where, text, facts)
         check_own_words(where, text)
+    check_text_not_stronger("farsi_explanation", draft.farsi_explanation, facts)
     match = FAULT_OR_PROMISE.search(draft.reply)
     if match:
         raise ValueError(f"reply: do not admit fault or promise payment ({match.group(0)!r}).")

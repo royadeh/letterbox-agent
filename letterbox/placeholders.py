@@ -88,9 +88,18 @@ def letter_is_strong(checked: CheckedFact) -> bool:
 
 
 def check_not_stronger(where: str, checked: CheckedFact, english: str, farsi: str) -> None:
-    if letter_is_strong(checked):
-        return
-    if STRONG_ENGLISH.search(english) or any(word in farsi for word in STRONG_FARSI):
+    if not letter_is_strong(checked):
+        _reject_strong_wording(where, f"{english} {farsi}")
+
+
+def check_text_not_stronger(where: str, text: str, facts: NumberedFacts) -> None:
+    """For text not tied to one fact: strong wording only if a fact it refers to is strong in the letter."""
+    if not any(letter_is_strong(facts[fact_id]) for fact_id in placeholders(text) & facts.keys()):
+        _reject_strong_wording(where, text)
+
+
+def _reject_strong_wording(where: str, text: str) -> None:
+    if STRONG_ENGLISH.search(text) or any(word in text for word in STRONG_FARSI):
         raise ValueError(
             f"{where}: this sounds stronger than the letter; do not write 'must', 'need to' or 'have to', "
             "write 'the letter asks you to'."
