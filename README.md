@@ -50,11 +50,27 @@ pip install ".[dev]"
 pytest -q
 ```
 
+## What the first real run found
+
+The first run with the real model turned up four problems. Each was fixed with
+checks and tests:
+
+- The model turned "please pay" into "you must pay".
+- The reply draft took a position the reader never chose.
+- "within" appeared twice in a deadline.
+- A Farsi version of the sender's name was added.
+
 ## Limitations
 
 - Numbers written in words, such as "thirty days", may slip past the checks.
 - A phrase list can't catch every way of admitting fault or promising payment.
-- Not yet evaluated with the real model. <!-- Update this line after the eval. -->
+- Tested with automated tests that use a fake model. The real model was run by
+  hand on one synthetic letter. An evaluation script exists in `eval/` but has
+  not been run on the full set, so no accuracy figures are claimed.
+- The Farsi was read by hand on one letter only.
+- The Farsi explanation of the reply draft may use wording that reads
+  ambiguously or too strongly. A stricter check for it exists on an unmerged
+  branch (`reply-wording`).
 
 ## Disclaimer
 
