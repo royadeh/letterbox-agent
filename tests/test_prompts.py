@@ -63,3 +63,9 @@ def test_reply_prompt_asks_for_a_neutral_reply() -> None:
     text = REPLY_SYSTEM_PROMPT.lower()
     assert "do not say that the reader accepts, rejects or disputes" in text
     assert "explanation" in text and "documents" in text
+
+
+@pytest.mark.parametrize("prompt", ["explain", "options", "reply"])
+def test_prompts_say_never_to_translate_the_senders_name(prompt: str) -> None:
+    text = {"explain": EXPLAIN_SYSTEM_PROMPT, "options": OPTIONS_SYSTEM_PROMPT, "reply": REPLY_SYSTEM_PROMPT}[prompt].lower()
+    assert "never translate or transliterate the sender's name" in text

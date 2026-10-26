@@ -154,3 +154,20 @@ def test_the_model_is_told_which_facts_use_strong_wording() -> None:
     described = describe_all(UTILITY_FACTS)
     assert '"strong_wording": "yes"' in described
     assert described.count('"strong_wording": "yes"') == 2  # the pay-by deadline sentence and the pay action
+
+
+@pytest.mark.parametrize("word", ["within", "Within", "by", "before", "until"])
+def test_within_is_never_doubled_in_english(word: str) -> None:
+    result = fill(f"File it {word} {{F1}}.", FACTS, english_value, english_unconfirmed)
+    assert result == "File it within 90 days of the date of this notice."
+
+
+@pytest.mark.parametrize("word", ["در مدت", "ظرف", "تا"])
+def test_within_is_never_doubled_in_farsi(word: str) -> None:
+    result = fill(f"آن را {word} {{F1}} ثبت کنید.", FACTS, farsi_value, farsi_unconfirmed)
+    assert result == "آن را \u2068within 90 days of the date of this notice\u2069 ثبت کنید."
+
+
+def test_within_before_a_not_sure_deadline_becomes_a_note() -> None:
+    result = fill("File it within {F3}.", FACTS, english_value, english_unconfirmed)
+    assert result == "File it. The deadline is not confirmed: check with the sender."

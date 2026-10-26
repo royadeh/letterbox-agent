@@ -8,7 +8,7 @@ ANSWER = Answer(
     explanation_fa="<script>alert(1)</script> نکته",
     reply_en="Dear Office,",
     reply_fa="این پیش‌نویس",
-    reply_note_en="Sending this reply may not change any deadline in the letter.",
+    reply_note_en="Don’t assume that sending this reply changes any deadline in the letter.",
     reply_note_fa="یادداشت",
 )
 
@@ -47,7 +47,7 @@ def test_empty_sections_are_left_out() -> None:
 
 def test_reply_note_is_shown_before_the_draft() -> None:
     html = render_html(ANSWER)
-    assert html.index("Sending this reply may not change") < html.index("Dear Office,")
+    assert html.index("Don’t assume that sending") < html.index("Dear Office,")
     assert html.index("یادداشت") < html.index("این پیش‌نویس")
 
 
@@ -55,3 +55,28 @@ def test_disclaimer_is_kept_in_both_languages() -> None:
     html = render_html(ANSWER)
     assert DISCLAIMER in html
     assert f'<p lang="fa" dir="rtl">{DISCLAIMER_FA}</p>' in html
+
+
+FSI, PDI = "\u2068", "\u2069"
+
+
+def test_copied_values_are_wrapped_in_ltr_bdi() -> None:
+    answer = Answer(explanation_en="x", explanation_fa=f"حداقل پرداخت شما {FSI}$75.00{PDI} است.")
+    html = render_html(answer)
+    assert 'حداقل پرداخت شما <bdi dir="ltr">$75.00</bdi> است.' in html
+    assert FSI not in html and PDI not in html
+
+
+def test_text_inside_bdi_is_still_escaped() -> None:
+    answer = Answer(explanation_en="x", explanation_fa=f"نکته {FSI}<b>A & B</b>{PDI}.")
+    assert '<bdi dir="ltr">&lt;b&gt;A &amp; B&lt;/b&gt;</bdi>' in render_html(answer)
+
+
+def test_every_copied_value_from_the_pipeline_is_wrapped() -> None:
+    from conftest import FakeLLM
+    from test_graph import EXPLAIN_OK, EXTRACT_OK, LETTER, OPTIONS_OK, REPLY_OK
+    from letterbox.graph import run
+
+    html = render_html(run(LETTER, FakeLLM([EXTRACT_OK, EXPLAIN_OK, OPTIONS_OK, REPLY_OK]), run_id="r1"))
+    for value in ["Northfield Revenue Office", "TEST-REF-001", "$1,284.50", "March 31, 2027"]:
+        assert f'<bdi dir="ltr">{value}</bdi>' in html, value

@@ -13,6 +13,7 @@ from letterbox.placeholders import (
     NumberedFacts,
     check_known,
     check_not_stronger,
+    check_sender_name,
     check_own_words,
     describe_all,
     english_unconfirmed,
@@ -126,6 +127,7 @@ def _check_option_text(option: DraftOption, facts: NumberedFacts) -> None:
     check_not_stronger(option.fact, facts[option.fact], option.english, farsi)
     for text in (option.english, option.farsi, option.farsi_condition or ""):
         check_known(option.fact, text, facts)
+        check_sender_name(option.fact, text, facts)
         check_own_words(option.fact, text)
 
 

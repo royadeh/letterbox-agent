@@ -80,6 +80,7 @@ BAD_ANSWERS = {
     "persian digits in farsi": answer(farsi=GOOD_FARSI + " ۹۰ روز"),
     "unknown placeholder": answer(reply=GOOD_REPLY.replace("{F1}", "{F9}")),
     "missing reference placeholder": answer(reply=GOOD_REPLY.replace("Re: {F2}\n\n", "")),
+    "farsi name in parentheses after the sender": answer(farsi=GOOD_FARSI.replace("به {F1} می‌گوید", "به {F1} (اداره درآمد نورث‌فیلد) می‌گوید")),
     "does not accept": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I do not accept the reassessment.")),
     "don't accept, curly apostrophe": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I don\u2019t accept this.")),
     "disputes": answer(reply=GOOD_REPLY.replace("Thank you for your letter.", "I dispute this claim.")),

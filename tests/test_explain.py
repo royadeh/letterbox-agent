@@ -115,6 +115,9 @@ BAD_ANSWERS = {
     "amount without its placeholder": edited(1, english="Your minimum payment is shown.", farsi="حداقل پرداخت شما مشخص شده است."),
     "not-sure deadline without its placeholder": edited(2, english="The payment is due soon.", farsi="مهلت پرداخت نزدیک است."),
     "english stronger than the letter": edited(1, english="You must pay {F2}."),
+    "farsi name in parentheses after the sender": edited(0, farsi="این نامه از طرف {F1} (اتحادیه اعتباری هاربرویو) است."),
+    "farsi name in parentheses in the english": edited(0, english="This letter is from {F1} (اتحادیه اعتباری)."),
+    "sender translated instead of its placeholder": edited(0, english="This letter is from your credit union.", farsi="این نامه از طرف اتحادیه اعتباری هاربرویو است."),
     "farsi stronger than the letter": edited(1, farsi="شما باید {F2} را بپردازید."),
 }
 
@@ -163,3 +166,8 @@ def test_not_sure_deadline_after_by_in_the_explanation_becomes_a_note() -> None:
     assert isinstance(result, Explanation)
     assert result.items[2].english == "Pay the minimum payment. The deadline is not confirmed: check with the sender."
     assert result.items[2].farsi == "حداقل پرداخت را بپردازید. مهلت تأیید نشده است: با فرستنده بررسی کنید."
+
+
+def test_english_words_in_parentheses_after_the_sender_are_allowed() -> None:
+    with_note = edited(0, english="This letter is from {F1} (the sender).", farsi="این نامه از طرف {F1} (the sender) است.")
+    assert isinstance(explain(VERIFIED, FakeLLM([with_note])), Explanation)

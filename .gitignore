@@ -7,3 +7,5 @@ __pycache__/
 data/private/
 build/
 *.egg-info/
+out.html
+*.html

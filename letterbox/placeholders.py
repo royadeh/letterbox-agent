@@ -26,15 +26,19 @@ FARSI_MONTHS = frozenset(
         "فروردین", "اردیبهشت", "خرداد", "مرداد", "شهریور", "آبان", "بهمن", "اسفند",
     }
 )
-# A placeholder, and an English or Farsi preposition before it. "by" is dropped
-# before a value that already starts with "within", so the reader never sees
-# "by within". A not-sure deadline, amount or date is never placed after a
-# preposition: it is taken out and a "not confirmed" note follows the sentence.
+# A placeholder, and an English or Farsi preposition before it. Words such as
+# "within" or "by" are dropped before a value that already starts with "within",
+# so "within" is never doubled. A not-sure deadline, amount or date is never
+# placed after a preposition: it is taken out and a "not confirmed" note follows
+# the sentence. Longer words come first so that "در مدت" wins over "در".
 FILL = re.compile(
-    r"(?P<before>(?<!\w)(?P<word>by|before|until|no later than|of|on|تا|قبل از|در)\s+)?\{(?P<id>F\d+)\}",
+    r"(?P<before>(?<!\w)(?P<word>no later than|within|before|until|by|of|on|در مدت|قبل از|ظرف|تا|در)\s+)?"
+    r"\{(?P<id>F\d+)\}",
     re.IGNORECASE,
 )
-BY_WORDS = frozenset({"by", "before", "until", "no later than", "تا", "قبل از"})
+WITHIN_WORDS = frozenset({"within", "by", "before", "until", "no later than", "در مدت", "ظرف", "تا", "قبل از"})
+# Farsi (Arabic-script) text inside parentheses, such as a translated name.
+FARSI_IN_PARENTHESES = r"\s*\([^)]*[\u0600-\u06FF][^)]*\)"
 NOTE_MARK = "\x00"
 SENTENCE_END = re.compile(r"[.!?؟](?=\s|$)")
 SPACE_BEFORE_PUNCTUATION = re.compile(r"[ \t]+(?=[.,;:!?،؛؟])")
@@ -116,6 +120,19 @@ def check_own_words(where: str, text: str) -> None:
         raise ValueError(f"{where}: write dates only as placeholders.")
 
 
+def check_sender_name(where: str, text: str, facts: NumberedFacts) -> None:
+    """The sender's name is shown only as copied: no Farsi version in parentheses next to it."""
+    for fact_id, checked in facts.items():
+        if checked.fact.kind is not FactKind.SENDER:
+            continue
+        name = re.escape(checked.fact.value)
+        if re.search(rf"(\{{{fact_id}\}}|{name}){FARSI_IN_PARENTHESES}", text):
+            raise ValueError(
+                f"{where}: write the sender's name only as {{{fact_id}}}, exactly as in the letter; "
+                "do not add a Farsi version in parentheses."
+            )
+
+
 def fill(text: str, facts: NumberedFacts, value_of: ValueOf, note_of: NoteOf) -> str:
     notes: list[str] = []
 
@@ -125,7 +142,7 @@ def fill(text: str, facts: NumberedFacts, value_of: ValueOf, note_of: NoteOf) ->
         if before and _is_unconfirmed_value(checked):
             notes.append(note_of(checked.fact.kind))
             return NOTE_MARK
-        if before and match.group("word").lower() in BY_WORDS and _starts_with_within(checked):
+        if before and match.group("word").lower() in WITHIN_WORDS and _starts_with_within(checked):
             before = ""
         return f"{before}{value_of(checked)}"
 

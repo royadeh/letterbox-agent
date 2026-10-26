@@ -174,8 +174,8 @@ def test_run_state_returns_the_steps_results_as_well_as_the_answer() -> None:
 
 def test_reply_section_says_sending_may_not_change_deadlines() -> None:
     answer, _ = run_with([EXTRACT_OK, EXPLAIN_OK, OPTIONS_OK, REPLY_OK])
-    assert answer.reply_note_en == REPLY_NOTE == "Sending this reply may not change any deadline in the letter."
-    assert answer.reply_note_fa == REPLY_NOTE_FA
+    assert answer.reply_note_en == REPLY_NOTE == "Don’t assume that sending this reply changes any deadline in the letter."
+    assert answer.reply_note_fa == REPLY_NOTE_FA == "فرض نکنید که ارسال این پاسخ هیچ مهلتی را در نامه تغییر می‌دهد."
     text = answer.text()
     assert text.index("Reply draft") < text.index(REPLY_NOTE) < text.index(answer.reply_en)
     assert text.index(REPLY_NOTE_FA) < text.index(answer.reply_fa)
