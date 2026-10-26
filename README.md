@@ -64,9 +64,7 @@ checks and tests:
 
 - Numbers written in words, such as "thirty days", may slip past the checks.
 - A phrase list can't catch every way of admitting fault or promising payment.
-- Tested with automated tests that use a fake model. The real model was run by
-  hand on one synthetic letter. An evaluation script exists in `eval/` but has
-  not been run on the full set, so no accuracy figures are claimed.
+- The automated tests don’t call Claude. They feed the program answers I wrote in advance, including broken and made-up ones, to check that my safety rules catch them. I ran the real model   by hand on one synthetic letter. An evaluation script exists in eval/ but has not been run on the full set, so no accuracy figures are claimed.
 - The Farsi was read by hand on one letter only.
 - The Farsi explanation of the reply draft may use wording that reads
   ambiguously or too strongly. A stricter check for it exists on an unmerged
